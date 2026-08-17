@@ -99,6 +99,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "electronics_shopping_website.users",
+    "category",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
