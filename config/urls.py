@@ -22,6 +22,7 @@ urlpatterns = [
     path("users/", include("electronics_shopping_website.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
     path("categories/", include("category.urls"),),
+    path("api/",include("products.urls"),),
     # Your stuff: custom urls includes go here
     # ...
     # Media files
