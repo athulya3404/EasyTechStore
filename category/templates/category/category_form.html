@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+  {% if form.instance.pk %}Edit Category{% else %}New Category{% endif %} - EasyTech
+{% endblock title %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+          <h2 class="card-title mb-0">
+            {% if form.instance.pk %}
+              Edit Category: {{ form.instance.name }}
+            {% else %}
+              Create New Category
+            {% endif %}
+          </h2>
+        </div>
+        
+        <div class="card-body p-4">
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            {{ form|crispy }}
+            
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <a href="{% url 'category:list' %}" class="btn btn-outline-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary">
+                {% if form.instance.pk %}Update{% else %}Create{% endif %} Category
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

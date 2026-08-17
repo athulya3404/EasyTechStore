@@ -6,10 +6,6 @@ from .models import Category
 
 
 def category_list(request):
-    """
-    Return all categories.
-    """
-
     categories = Category.objects.all()
 
     return render(
