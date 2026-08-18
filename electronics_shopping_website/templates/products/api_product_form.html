@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Add Product - EasyTech{% endblock title %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <h2 class="mb-4">Add New Product (API)</h2>
+      
+      <form id="apiProductForm">
+        <div class="mb-3">
+          <label class="form-label">Product Name</label>
+          <input type="text" id="name" class="form-control" required>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label">Description</label>
+          <textarea id="description" class="form-control"></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Price ($)</label>
+          <input type="number" id="price" class="form-control" step="0.01" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Stock Quantity</label>
+          <input type="number" id="stock" class="form-control" value="10" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Category ID</label>
+          <input type="number" id="category" class="form-control" required>
+          <div class="form-text">Enter the numeric ID of an existing category.</div>
+        </div>
+        
+        <div class="mb-4">
+          <label class="form-label">Product Image</label>
+          <input type="file" id="image" class="form-control" accept="image/*">
+        </div>
+        
+        <button type="submit" class="btn btn-primary w-100 fw-bold">Save Product Seamlessly</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block javascript %}
+{{ block.super }}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+      const form = document.getElementById('apiProductForm');
+      
+      if (!form) {
+          console.error("Critical: 'apiProductForm' element not found in DOM!");
+          return;
+      }
+      
+      form.addEventListener('submit', async function(e) {
+          // Stops the browser from reloading and putting ? in the URL
+          e.preventDefault();
+          
+          const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+          if (!csrfMeta) {
+              alert("CSRF token meta tag missing!");
+              return;
+          }
+          const csrfToken = csrfMeta.getAttribute('content');
+          
+          const formData = new FormData();
+          formData.append('name', document.getElementById('name').value);
+          formData.append('description', document.getElementById('description').value);
+          formData.append('price', document.getElementById('price').value);
+          formData.append('stock', document.getElementById('stock').value);
+          formData.append('category', document.getElementById('category').value);
+          
+          const imageInput = document.getElementById('image');
+          if (imageInput.files.length > 0) {
+              formData.append('image', imageInput.files[0]);
+          }
+          
+          try {
+              const response = await fetch('/api/products/', {
+                  method: 'POST',
+                  headers: {
+                      'X-CSRFToken': csrfToken
+                  },
+                  credentials: 'include', // Sends your admin login session cookie along with the request
+                  body: formData
+              });
+              
+              if (response.ok) {
+                  const newProduct = await response.json();
+                  alert(`Success! Product "${newProduct.name}" added successfully.`);
+                  form.reset();
+              } else {
+                  const errors = await response.json();
+                  console.error("Server validation errors:", errors);
+                  alert("Failed to add product. Check browser console (F12) for details.");
+              }
+          } catch (error) {
+              console.error("Network error:", error);
+              alert("A network error occurred.");
+          }
+      });
+  });
+</script>
+{% endblock javascript %}

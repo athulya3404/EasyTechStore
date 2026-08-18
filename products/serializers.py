@@ -1,17 +1,17 @@
 from rest_framework import serializers
-
 from .models import Product
-
 
 class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(
         source="category.name",
         read_only=True,
     )
+    
+    # Explicitly define is_active so it defaults to True when creating via API
+    is_active = serializers.BooleanField(default=True, required=False)
 
     class Meta:
         model = Product
-
         fields = [
             "id",
             "name",
@@ -25,7 +25,6 @@ class ProductSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-
         read_only_fields = [
             "id",
             "created_at",

@@ -1,0 +1,70 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Brand: {{ brand.name }} - EasyTech Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/manager.css' %}">
+</head>
+<body>
+    <div class="manager-wrapper">
+        {% include "manager/_sidebar.html" %}
+
+        <main class="manager-content">
+            <header class="manager-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-toggle" id="mobileSidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title" style="color: var(--danger);">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        Confirm Brand Deletion
+                    </h1>
+                </div>
+            </header>
+
+            <div class="manager-container">
+                <div class="manager-card form-layout" style="max-width: 600px; margin: 40px auto; border-top: 4px solid var(--danger);">
+                    <div class="card-body" style="text-align: center; padding: 36px 30px;">
+                        <div style="width: 70px; height: 70px; border-radius: 50%; background: var(--danger-bg); color: var(--danger); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 20px auto;">
+                            <i class="fas fa-trash-can"></i>
+                        </div>
+
+                        <h2 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 12px;">Delete Brand?</h2>
+                        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 24px;">
+                            Are you sure you want to permanently delete brand <strong style="color: var(--text-main);">"{{ brand.name }}"</strong>?
+                        </p>
+
+                        <div style="background: #f8fafc; border: 1px solid var(--card-border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 26px; text-align: left;">
+                            <div class="info-item">
+                                <span class="info-label">Brand Name:</span>
+                                <span class="info-val">{{ brand.name }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Associated Products:</span>
+                                <span class="info-val">{{ brand.products.count }} product(s)</span>
+                            </div>
+                        </div>
+
+                        <form method="POST">
+                            {% csrf_token %}
+                            <div style="display: flex; gap: 12px; justify-content: center;">
+                                <button type="submit" class="btn btn-danger" style="padding: 12px 28px;">
+                                    <i class="fas fa-trash"></i> Yes, Delete Brand
+                                </button>
+                                <a href="{% url 'manager:brands' %}" class="btn btn-secondary" style="padding: 12px 24px;">
+                                    Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{% static 'js/manager.js' %}"></script>
+</body>
+</html>

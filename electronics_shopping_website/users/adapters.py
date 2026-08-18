@@ -13,9 +13,19 @@ if typing.TYPE_CHECKING:
     from electronics_shopping_website.users.models import User
 
 
+from django.urls import reverse
+
+
 class AccountAdapter(DefaultAccountAdapter):
     def is_open_for_signup(self, request: HttpRequest) -> bool:
         return getattr(settings, "ACCOUNT_ALLOW_REGISTRATION", True)
+
+    def get_login_redirect_url(self, request: HttpRequest) -> str:
+        if request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+            return reverse("manager:home")
+        return super().get_login_redirect_url(request)
+
+
 
 
 class SocialAccountAdapter(DefaultSocialAccountAdapter):

@@ -1,0 +1,119 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categories Management - EasyTech Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/manager.css' %}">
+</head>
+<body>
+    <div class="manager-wrapper">
+        {% include "manager/_sidebar.html" %}
+
+        <main class="manager-content">
+            <header class="manager-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-toggle" id="mobileSidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">
+                        <i class="fas fa-layer-group" style="color: var(--primary);"></i>
+                        Categories Management
+                    </h1>
+                </div>
+                <div class="topbar-right">
+                    <a href="{% url 'manager:category_add' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Category
+                    </a>
+                </div>
+            </header>
+
+            <div class="manager-container">
+                {% if messages %}
+                    <div class="manager-alert-container">
+                        {% for message in messages %}
+                            <div class="manager-alert manager-alert-{{ message.tags }}">
+                                <span><i class="fas fa-info-circle"></i> {{ message }}</span>
+                                <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:inherit;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Header Info Bar -->
+                <div class="filter-bar">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-weight: 700; color: var(--text-main); font-size: 1rem;">All Product Categories</span>
+                        <span class="badge-pill badge-info">{{ categories.count }} Total</span>
+                    </div>
+                    <div class="search-input-group" style="max-width: 300px;">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="clientTableSearch" placeholder="Filter categories...">
+                    </div>
+                </div>
+
+                <!-- Categories Grid Cards -->
+                <div class="grid-cards">
+                    {% if categories %}
+                        {% for category in categories %}
+                            <div class="item-card">
+                                <div>
+                                    <div class="item-card-header">
+                                        <div class="item-card-icon">
+                                            <i class="fas fa-folder"></i>
+                                        </div>
+                                        <span class="badge-pill {% if category.is_active %}badge-active{% else %}badge-inactive{% endif %}">
+                                            {% if category.is_active %}Active{% else %}Inactive{% endif %}
+                                        </span>
+                                    </div>
+                                    <h3 class="item-card-title">{{ category.name }}</h3>
+                                    <p class="item-card-desc">
+                                        {% if category.description %}
+                                            {{ category.description|truncatewords:20 }}
+                                        {% else %}
+                                            <span style="color: var(--text-light); font-style: italic;">No description provided.</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+
+                                <div class="item-card-footer">
+                                    <span style="font-weight: 700; color: #4f46e5; font-size: 0.85rem;">
+                                        <i class="fas fa-box" style="margin-right: 4px;"></i> {{ category.product_count|default:category.products.count }} Products
+                                    </span>
+                                    <div class="btn-action-group">
+                                        <a href="{% url 'manager:category_edit' category.id %}" class="action-btn action-btn-edit" title="Edit Category">
+                                            <i class="fas fa-pen-to-square"></i>
+                                        </a>
+                                        <a href="{% url 'manager:category_delete' category.id %}" class="action-btn action-btn-delete" title="Delete Category">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="manager-card" style="grid-column: 1 / -1;">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="fas fa-folder-open"></i>
+                                </div>
+                                <h3 class="empty-title">No Categories Found</h3>
+                                <p class="empty-text">Organize your store by creating product categories like Laptops, Smartphones, Smartwatches, Headphones, Cameras, and Accessories.</p>
+                                <a href="{% url 'manager:category_add' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Add Category
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{% static 'js/manager.js' %}"></script>
+</body>
+</html>

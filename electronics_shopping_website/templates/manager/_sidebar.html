@@ -1,0 +1,95 @@
+{% load static %}
+<!-- ==========================================================================
+     EASYTECH MANAGER SIDEBAR
+     ========================================================================== -->
+<aside class="manager-sidebar">
+    <!-- Header / Brand -->
+    <div class="sidebar-header">
+        <a href="{% url 'manager:home' %}" class="sidebar-brand-title">
+            <div class="brand-icon">
+                <i class="fas fa-microchip"></i>
+            </div>
+            <div>
+                EASYTECH <span>MANAGER</span>
+            </div>
+        </a>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="sidebar-nav">
+        <!-- Dashboard Section -->
+        <div class="nav-group">
+            <a href="{% url 'manager:home' %}" class="sidebar-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+        </div>
+
+        <!-- Store Management -->
+        <div class="nav-group">
+            <div class="nav-group-title">Store Management</div>
+            <a href="{% url 'manager:products' %}" class="sidebar-link {% if 'product' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-boxes-stacked"></i>
+                <span>Products</span>
+            </a>
+            <a href="{% url 'manager:categories' %}" class="sidebar-link {% if 'categor' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-layer-group"></i>
+                <span>Categories</span>
+            </a>
+            <a href="{% url 'manager:brands' %}" class="sidebar-link {% if 'brand' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-award"></i>
+                <span>Brands</span>
+            </a>
+            <a href="{% url 'manager:inventory' %}" class="sidebar-link {% if request.resolver_match.url_name == 'inventory' %}active{% endif %}">
+                <i class="fas fa-warehouse"></i>
+                <span>Inventory</span>
+            </a>
+        </div>
+
+        <!-- Order Management -->
+        <div class="nav-group">
+            <div class="nav-group-title">Order Management</div>
+            <a href="{% url 'manager:orders' %}" class="sidebar-link {% if 'order' in request.resolver_match.url_name and not request.GET.status %}active{% endif %}">
+                <i class="fas fa-shopping-bag"></i>
+                <span>Orders</span>
+            </a>
+            <a href="{% url 'manager:orders' %}?status=Pending" class="sidebar-link {% if request.GET.status == 'Pending' %}active{% endif %}">
+                <i class="fas fa-clock-rotate-left"></i>
+                <span>Order Status</span>
+                {% if pending_orders %}
+                    <span class="sidebar-badge">{{ pending_orders }}</span>
+                {% endif %}
+            </a>
+        </div>
+
+        <!-- Reports -->
+        <div class="nav-group">
+            <div class="nav-group-title">Reports</div>
+            <a href="{% url 'manager:reports' %}" class="sidebar-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+                <i class="fas fa-chart-line"></i>
+                <span>Sales Reports</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Account / Footer -->
+    <div class="sidebar-footer">
+        <div class="user-profile-badge">
+            <div class="user-avatar">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <div class="user-meta">
+                <div class="user-name" title="{{ request.user.email }}">
+                    {% if request.user.name %}{{ request.user.name }}{% else %}{{ request.user.email }}{% endif %}
+                </div>
+                <div class="user-role">
+                    {% if request.user.is_superuser %}Super Admin{% else %}Site Manager{% endif %}
+                </div>
+            </div>
+        </div>
+        <a href="{% url 'account_logout' %}" class="logout-link">
+            <i class="fas fa-right-from-bracket"></i>
+            <span>Logout</span>
+        </a>
+    </div>
+</aside>

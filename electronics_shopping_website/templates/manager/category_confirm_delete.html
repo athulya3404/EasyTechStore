@@ -1,0 +1,82 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Category: {{ category.name }} - EasyTech Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/manager.css' %}">
+</head>
+<body>
+    <div class="manager-wrapper">
+        {% include "manager/_sidebar.html" %}
+
+        <main class="manager-content">
+            <header class="manager-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-toggle" id="mobileSidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title" style="color: var(--danger);">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        Confirm Category Deletion
+                    </h1>
+                </div>
+            </header>
+
+            <div class="manager-container">
+                <div class="manager-card form-layout" style="max-width: 600px; margin: 40px auto; border-top: 4px solid var(--danger);">
+                    <div class="card-body" style="text-align: center; padding: 36px 30px;">
+                        <div style="width: 70px; height: 70px; border-radius: 50%; background: var(--danger-bg); color: var(--danger); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 20px auto;">
+                            <i class="fas fa-trash-can"></i>
+                        </div>
+
+                        <h2 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 12px;">Delete Category?</h2>
+                        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 24px;">
+                            Are you sure you want to permanently delete category <strong style="color: var(--text-main);">"{{ category.name }}"</strong>?
+                        </p>
+
+                        <div style="background: #f8fafc; border: 1px solid var(--card-border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 26px; text-align: left;">
+                            <div class="info-item">
+                                <span class="info-label">Category Name:</span>
+                                <span class="info-val">{{ category.name }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Attached Products:</span>
+                                <span class="info-val" style="{% if category.products.count > 0 %}color: #dc2626; font-weight: 800;{% endif %}">
+                                    {{ category.products.count }} product(s)
+                                </span>
+                            </div>
+                        </div>
+
+                        {% if category.products.count > 0 %}
+                            <div class="manager-alert manager-alert-error" style="text-align: left; margin-bottom: 24px;">
+                                <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>
+                                Cannot delete this category because products are assigned to it. Please reassign or delete the products first.
+                            </div>
+                            <a href="{% url 'manager:categories' %}" class="btn btn-secondary" style="padding: 12px 24px;">
+                                <i class="fas fa-arrow-left"></i> Back to Categories
+                            </a>
+                        {% else %}
+                            <form method="POST">
+                                {% csrf_token %}
+                                <div style="display: flex; gap: 12px; justify-content: center;">
+                                    <button type="submit" class="btn btn-danger" style="padding: 12px 28px;">
+                                        <i class="fas fa-trash"></i> Yes, Delete Category
+                                    </button>
+                                    <a href="{% url 'manager:categories' %}" class="btn btn-secondary" style="padding: 12px 24px;">
+                                        Cancel
+                                    </a>
+                                </div>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{% static 'js/manager.js' %}"></script>
+</body>
+</html>

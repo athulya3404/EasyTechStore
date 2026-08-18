@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Your Cart - EasyTech{% endblock title %}
+
+{% block content %}
+<div class="container py-5">
+  <h1 class="display-5 fw-bold mb-5 text-dark">Shopping Cart</h1>
+
+  {% if cart.items.all %}
+    <div class="row g-5">
+
+      <!-- Cart Items Table -->
+      <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" class="py-3 ps-4">Product</th>
+                  <th scope="col" class="py-3">Price</th>
+                  <th scope="col" class="py-3">Quantity</th>
+                  <th scope="col" class="py-3">Subtotal</th>
+                  <th scope="col" class="py-3 text-center">Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {% for item in cart.items.all %}
+                  <tr>
+
+                    <!-- Product -->
+                    <td class="ps-4 py-3">
+                      <div class="d-flex align-items-center">
+
+                        <img
+                          src="{% if item.product.image %}{{ item.product.image.url }}{% else %}{% static 'images/placeholder.png' %}{% endif %}"
+                          alt="{{ item.product.name }}"
+                          class="img-fluid rounded"
+                          style="width: 60px; height: 60px; object-fit: contain; background: #f8f9fa;"
+                        >
+
+                        <div class="ms-3">
+                          <h6 class="mb-0 fw-bold">
+                            {{ item.product.name }}
+                          </h6>
+
+                          <small class="text-muted">
+                            {{ item.product.category.name }}
+                          </small>
+                        </div>
+
+                      </div>
+                    </td>
+
+                    <!-- Price -->
+                    <td class="py-3 text-muted">
+                      ${{ item.product.price }}
+                    </td>
+
+                    <!-- Quantity -->
+                    <td class="py-3">
+                      <div class="input-group input-group-sm" style="width: 100px;">
+
+                        <!-- Decrease -->
+                        <button
+                          class="btn btn-outline-secondary update-cart-btn"
+                          type="button"
+                          data-item-id="{{ item.id }}"
+                          data-new-quantity="{{ item.quantity|add:'-1' }}"
+                        >
+                          -
+                        </button>
+
+                        <!-- Current Quantity -->
+                        <input
+                          type="text"
+                          class="form-control text-center fw-bold bg-white"
+                          value="{{ item.quantity }}"
+                          readonly
+                        >
+
+                        <!-- Increase -->
+                        <button
+                          class="btn btn-outline-secondary update-cart-btn"
+                          type="button"
+                          data-item-id="{{ item.id }}"
+                          data-new-quantity="{{ item.quantity|add:'1' }}"
+                        >
+                          +
+                        </button>
+
+                      </div>
+                    </td>
+
+                    <!-- Subtotal -->
+                    <td class="py-3 fw-bold text-dark">
+                      ${{ item.get_subtotal }}
+                    </td>
+
+                    <!-- Remove -->
+                    <td class="py-3 text-center">
+                      <button
+                        type="button"
+                        data-item-id="{{ item.id }}"
+                        class="btn btn-sm btn-outline-danger shadow-sm remove-cart-btn"
+                      >
+                        Remove
+                      </button>
+                    </td>
+
+                  </tr>
+                {% endfor %}
+              </tbody>
+
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 bg-light p-4">
+
+          <h4 class="fw-bold mb-4">
+            Order Summary
+          </h4>
+
+          <!-- Subtotal -->
+          <div class="d-flex justify-content-between mb-3 text-muted">
+            <span>Subtotal</span>
+            <span>${{ cart.get_total_price }}</span>
+          </div>
+
+          <!-- Tax -->
+          <div class="d-flex justify-content-between mb-3 text-muted">
+            <span>Estimated Tax</span>
+            <span>$0.00</span>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- Total -->
+          <div class="d-flex justify-content-between mb-4">
+            <span class="fs-5 fw-bold text-dark">
+              Total
+            </span>
+
+            <span class="fs-5 fw-bold text-success">
+              ${{ cart.get_total_price }}
+            </span>
+          </div>
+
+          <!-- Checkout Button -->
+          <a
+            href="{% url 'orders:checkout' %}"
+            class="btn btn-primary btn-lg w-100 fw-bold shadow-sm d-block text-center text-decoration-none"
+          >
+            Proceed to Checkout
+          </a>
+
+          <!-- Continue Shopping -->
+          <div class="mt-3 text-center">
+            <a
+              href="{% url 'home' %}"
+              class="text-decoration-none text-muted small"
+            >
+              Continue Shopping
+            </a>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  {% else %}
+
+    <!-- Empty Cart -->
+    <div class="text-center py-5">
+
+      <h3 class="text-muted mb-4">
+        Your cart is currently empty.
+      </h3>
+
+      <a
+        href="{% url 'home' %}"
+        class="btn btn-primary btn-lg px-5 fw-bold shadow-sm"
+      >
+        Browse Products
+      </a>
+
+    </div>
+
+  {% endif %}
+</div>
+{% endblock content %}

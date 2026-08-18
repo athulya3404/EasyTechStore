@@ -1,0 +1,201 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products Management - EasyTech Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/manager.css' %}">
+</head>
+<body>
+    <div class="manager-wrapper">
+        {% include "manager/_sidebar.html" %}
+
+        <main class="manager-content">
+            <header class="manager-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-toggle" id="mobileSidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">
+                        <i class="fas fa-boxes-stacked" style="color: var(--primary);"></i>
+                        Products Management
+                    </h1>
+                </div>
+                <div class="topbar-right">
+                    <a href="{% url 'manager:product_add' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Product
+                    </a>
+                </div>
+            </header>
+
+            <div class="manager-container">
+                {% if messages %}
+                    <div class="manager-alert-container">
+                        {% for message in messages %}
+                            <div class="manager-alert manager-alert-{{ message.tags }}">
+                                <span><i class="fas fa-info-circle"></i> {{ message }}</span>
+                                <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:inherit;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Filter & Search Bar -->
+                <div class="filter-bar">
+                    <form method="GET" class="filter-form">
+                        <div class="search-input-group">
+                            <i class="fas fa-search"></i>
+                            <input type="text" name="q" placeholder="Search by name, specs, brand..." value="{{ query }}">
+                        </div>
+
+                        <select name="category" class="filter-select" onchange="this.form.submit()">
+                            <option value="">All Categories</option>
+                            {% for cat in categories %}
+                                <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"i" %}selected{% endif %}>
+                                    {{ cat.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <select name="brand" class="filter-select" onchange="this.form.submit()">
+                            <option value="">All Brands</option>
+                            {% for b in brands %}
+                                <option value="{{ b.id }}" {% if selected_brand == b.id|stringformat:"i" %}selected{% endif %}>
+                                    {{ b.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <select name="availability" class="filter-select" onchange="this.form.submit()">
+                            <option value="">All Availability</option>
+                            <option value="active" {% if selected_availability == 'active' %}selected{% endif %}>Active</option>
+                            <option value="inactive" {% if selected_availability == 'inactive' %}selected{% endif %}>Inactive</option>
+                            <option value="in_stock" {% if selected_availability == 'in_stock' %}selected{% endif %}>In Stock (&gt;10)</option>
+                            <option value="low_stock" {% if selected_availability == 'low_stock' %}selected{% endif %}>Low Stock (&le;10)</option>
+                            <option value="out_of_stock" {% if selected_availability == 'out_of_stock' %}selected{% endif %}>Out of Stock (0)</option>
+                        </select>
+
+                        {% if query or selected_category or selected_brand or selected_availability %}
+                            <a href="{% url 'manager:products' %}" class="btn btn-secondary btn-sm" title="Clear Filters">
+                                <i class="fas fa-times"></i> Reset
+                            </a>
+                        {% endif %}
+                    </form>
+
+                    <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-muted);">
+                        Showing <span style="color: var(--text-main);">{{ products.count }}</span> products
+                    </div>
+                </div>
+
+                <!-- Products Table Card -->
+                <div class="manager-card">
+                    <div class="table-responsive">
+                        <table class="manager-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Category</th>
+                                    <th>Brand</th>
+                                    <th>Price</th>
+                                    <th>Stock</th>
+                                    <th>Availability</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if products %}
+                                    {% for product in products %}
+                                        <tr>
+                                            <td>
+                                                <div class="product-info-cell">
+                                                    {% if product.image %}
+                                                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-thumb">
+                                                    {% else %}
+                                                        <div class="product-thumb">
+                                                            <i class="fas fa-image"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                    <div>
+                                                        <a href="{% url 'manager:product_detail' product.id %}" class="product-title" style="display:block;">
+                                                            {{ product.name }}
+                                                        </a>
+                                                        <span class="product-sub">ID: #{{ product.id }}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span style="font-weight: 600;">{{ product.category.name }}</span>
+                                            </td>
+                                            <td>
+                                                {% if product.brand %}
+                                                    <span style="color: var(--text-main); font-weight: 600;">{{ product.brand.name }}</span>
+                                                {% else %}
+                                                    <span style="color: var(--text-light);">—</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div style="font-weight: 800; color: var(--text-main);">
+                                                    ₹{{ product.price|floatformat:2 }}
+                                                </div>
+                                                {% if product.discount > 0 %}
+                                                    <span style="font-size: 0.75rem; color: #059669; font-weight: 700;">
+                                                        -{{ product.discount }}% off (₹{{ product.get_discounted_price|floatformat:2 }})
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span style="font-weight: 800; font-size: 0.95rem; {% if product.stock == 0 %}color: #dc2626;{% elif product.stock <= 10 %}color: #d97706;{% else %}color: #059669;{% endif %}">
+                                                    {{ product.stock }} units
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge-pill {% if product.is_active %}badge-active{% else %}badge-inactive{% endif %}">
+                                                    {% if product.is_active %}Active{% else %}Inactive{% endif %}
+                                                </span>
+                                            </td>
+                                            <td style="text-align: right;">
+                                                <div class="btn-action-group" style="justify-content: flex-end;">
+                                                    <a href="{% url 'manager:product_detail' product.id %}" class="action-btn action-btn-view" title="View Product Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{% url 'manager:product_edit' product.id %}" class="action-btn action-btn-edit" title="Edit Product">
+                                                        <i class="fas fa-pen-to-square"></i>
+                                                    </a>
+                                                    <a href="{% url 'manager:product_delete' product.id %}" class="action-btn action-btn-delete" title="Delete Product">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="7">
+                                            <div class="empty-state">
+                                                <div class="empty-icon">
+                                                    <i class="fas fa-box-open"></i>
+                                                </div>
+                                                <h3 class="empty-title">No Products Found</h3>
+                                                <p class="empty-text">No products matched your search or filter criteria. Create your first product or clear filters.</p>
+                                                <a href="{% url 'manager:product_add' %}" class="btn btn-primary">
+                                                    <i class="fas fa-plus"></i> Add Product
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{% static 'js/manager.js' %}"></script>
+</body>
+</html>

@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView
 from django.views.generic import RedirectView
+from django.views.generic import TemplateView
 from django.views.generic import UpdateView
 
 from electronics_shopping_website.users.models import User
@@ -46,7 +47,17 @@ class UserRedirectView(LoginRequiredMixin, RedirectView):
     permanent = False
 
     def get_redirect_url(self) -> str:
+        if self.request.user.is_staff or self.request.user.is_superuser:
+            return reverse("manager:home")
         return reverse("users:detail", kwargs={"pk": self.request.user.pk})
 
 
 user_redirect_view = UserRedirectView.as_view()
+
+
+class SiteManagerCreatedView(TemplateView):
+    """Display success page after Site Manager account is created"""
+    template_name = "admin/site_manager_created.html"
+
+
+site_manager_created_view = SiteManagerCreatedView.as_view()

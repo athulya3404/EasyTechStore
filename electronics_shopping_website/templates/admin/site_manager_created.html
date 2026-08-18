@@ -1,0 +1,355 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    :root {
+      --primary-color: #ffc107;
+      --accent-color: #6c5ce7;
+      --success-color: #00b894;
+      --light-bg: #f5f7fb;
+      --text-primary: #2d3436;
+    }
+
+    body {
+      background: linear-gradient(135deg, var(--light-bg) 0%, #e8ecf1 100%) !important;
+    }
+
+    #header {
+      display: none !important;
+    }
+
+    #container {
+      display: flex;
+      min-height: 100vh;
+      background: transparent;
+      position: relative;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    #sidebar {
+      display: none !important;
+    }
+
+    #content {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100%;
+      background: transparent;
+    }
+
+    .success-container {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+      padding: 60px 40px;
+      text-align: center;
+      max-width: 600px;
+      animation: slideUp 0.6s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, var(--success-color) 0%, #00a878 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 30px;
+      font-size: 3.5rem;
+      animation: bounce 0.6s ease-out;
+    }
+
+    @keyframes bounce {
+      0% {
+        transform: scale(0.8);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .success-container h1 {
+      font-size: 2rem;
+      color: var(--text-primary);
+      margin-bottom: 15px;
+      font-weight: 800;
+    }
+
+    .success-container .subtitle {
+      font-size: 1.1rem;
+      color: #636e72;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+
+    .credentials-box {
+      background: #f8f9fc;
+      border: 2px solid var(--primary-color);
+      border-radius: 12px;
+      padding: 25px;
+      margin: 30px 0;
+      text-align: left;
+    }
+
+    .credentials-box h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .credential-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #e0e3ea;
+    }
+
+    .credential-item:last-child {
+      border-bottom: none;
+    }
+
+    .credential-label {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .credential-value {
+      background: #ffffff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      color: var(--accent-color);
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .copy-btn {
+      background: var(--primary-color);
+      color: #000;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+      margin-left: 10px;
+    }
+
+    .copy-btn:hover {
+      background: #ffca2c;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+    }
+
+    .warning-box {
+      background: #fff3cd;
+      border-left: 4px solid var(--primary-color);
+      padding: 15px;
+      border-radius: 6px;
+      margin: 25px 0;
+      text-align: left;
+    }
+
+    .warning-box p {
+      margin: 0;
+      color: #856404;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 35px;
+    }
+
+    .btn {
+      padding: 12px 28px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary-color) 0%, #ffb300 100%);
+      color: #000;
+      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(255, 193, 7, 0.4);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--accent-color);
+      border: 2px solid var(--accent-color);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(108, 92, 231, 0.1);
+      transform: translateY(-3px);
+    }
+
+    .info-text {
+      font-size: 0.85rem;
+      color: #636e72;
+      margin-top: 20px;
+      line-height: 1.6;
+    }
+
+    .status-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--success-color) 0%, #00a878 100%);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .success-container {
+        padding: 40px 25px;
+      }
+
+      .success-container h1 {
+        font-size: 1.6rem;
+      }
+
+      .success-icon {
+        width: 70px;
+        height: 70px;
+        font-size: 3rem;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .credential-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block title %}Site Manager Account Created - EasyTechStore Admin{% endblock %}
+
+{% block branding %}
+  <div style="display:none;"></div>
+{% endblock %}
+
+{% block nav-sidebar %}{% endblock %}
+
+{% block userlinks %}{% endblock %}
+
+{% block content %}
+<div class="success-container">
+  <div class="success-icon">✓</div>
+  
+  <span class="status-badge">Account Successfully Created</span>
+  
+  <h1>Welcome, Site Manager!</h1>
+  
+  <p class="subtitle">
+    Your Site Manager account has been successfully created. Use the credentials below to log in to the admin panel.
+  </p>
+
+  <div class="credentials-box">
+    <h3>📋 Your Login Credentials</h3>
+    
+    <div class="credential-item">
+      <span class="credential-label">Email:</span>
+      <span class="credential-value" id="email-value">ashinmathai33@gmail.com</span>
+      <button class="copy-btn" onclick="copyToClipboard('email-value')">Copy</button>
+    </div>
+    
+    <div class="credential-item">
+      <span class="credential-label">Password:</span>
+      <span class="credential-value" id="password-value">Admin123</span>
+      <button class="copy-btn" onclick="copyToClipboard('password-value')">Copy</button>
+    </div>
+  </div>
+
+  <div class="warning-box">
+    <p>
+      <strong>⚠️ Security Notice:</strong> Keep these credentials secure. Do not share them with anyone. 
+      You can change your password after logging in.
+    </p>
+  </div>
+
+  <div class="action-buttons">
+    <a href="{% url 'admin:login' %}" class="btn btn-primary">🔐 Login to Admin Panel</a>
+    <a href="/" class="btn btn-secondary">← Back to Store</a>
+  </div>
+
+  <p class="info-text">
+    <strong>Next Steps:</strong><br>
+    1. Click the login button to access the admin panel<br>
+    2. Enter your credentials above<br>
+    3. Change your password from the user profile settings<br>
+    4. Start managing your store!
+  </p>
+</div>
+
+<script>
+function copyToClipboard(elementId) {
+  const element = document.getElementById(elementId);
+  const text = element.textContent;
+  
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.style.background = var(--success-color);
+    
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.background = '';
+    }, 2000);
+  }).catch(err => {
+    console.error('Failed to copy: ', err);
+  });
+}
+</script>
+{% endblock %}

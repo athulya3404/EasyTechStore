@@ -1,0 +1,178 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Product: {{ product.name }} - EasyTech Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/manager.css' %}">
+</head>
+<body>
+    <div class="manager-wrapper">
+        {% include "manager/_sidebar.html" %}
+
+        <main class="manager-content">
+            <header class="manager-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-toggle" id="mobileSidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">
+                        <i class="fas fa-pen-to-square" style="color: var(--primary);"></i>
+                        Edit Product
+                    </h1>
+                </div>
+                <div class="topbar-right">
+                    <a href="{% url 'manager:product_detail' product.id %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-eye"></i> View Product Details
+                    </a>
+                    <a href="{% url 'manager:products' %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> Products List
+                    </a>
+                </div>
+            </header>
+
+            <div class="manager-container">
+                {% if messages %}
+                    <div class="manager-alert-container">
+                        {% for message in messages %}
+                            <div class="manager-alert manager-alert-{{ message.tags }}">
+                                <span><i class="fas fa-info-circle"></i> {{ message }}</span>
+                                <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:inherit;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="manager-card form-layout">
+                    <div class="card-top">
+                        <div class="card-top-title">
+                            <i class="fas fa-cube"></i> Editing: {{ product.name }}
+                        </div>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">Product ID: #{{ product.id }}</span>
+                    </div>
+
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+
+                            <!-- 1. Name -->
+                            <div class="form-group">
+                                <label class="form-label" for="productName">Product Name <span class="required">*</span></label>
+                                <input type="text" id="productName" name="name" class="form-control" value="{{ product.name }}" required>
+                            </div>
+
+                            <!-- 2. Category & Brand -->
+                            <div class="form-grid-2">
+                                <div class="form-group">
+                                    <label class="form-label" for="productCategory">Category <span class="required">*</span></label>
+                                    <select id="productCategory" name="category" class="form-control" required>
+                                        {% for cat in categories %}
+                                            <option value="{{ cat.id }}" {% if product.category_id == cat.id %}selected{% endif %}>
+                                                {{ cat.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="productBrand">Brand</label>
+                                    <select id="productBrand" name="brand" class="form-control">
+                                        <option value="">-- No Brand / Unbranded --</option>
+                                        {% for b in brands %}
+                                            <option value="{{ b.id }}" {% if product.brand_id == b.id %}selected{% endif %}>
+                                                {{ b.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- 3. Price, Discount, Stock -->
+                            <div class="form-grid-3">
+                                <div class="form-group">
+                                    <label class="form-label" for="productPrice">Price (₹) <span class="required">*</span></label>
+                                    <input type="number" id="productPrice" name="price" class="form-control" step="0.01" min="0" value="{{ product.price }}" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="productDiscount">Discount (%)</label>
+                                    <input type="number" id="productDiscount" name="discount" class="form-control" min="0" max="100" step="0.01" value="{{ product.discount|default:'0' }}">
+                                    <div class="form-hint">Final Price: ₹{{ product.get_discounted_price|floatformat:2 }}</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="productStock">Stock Quantity <span class="required">*</span></label>
+                                    <input type="number" id="productStock" name="stock" class="form-control" min="0" value="{{ product.stock }}" required>
+                                    <div class="form-hint">Status: {{ product.stock_status }}</div>
+                                </div>
+                            </div>
+
+                            <!-- 4. Description -->
+                            <div class="form-group">
+                                <label class="form-label" for="productDescription">Product Description</label>
+                                <textarea id="productDescription" name="description" class="form-control" rows="4">{{ product.description }}</textarea>
+                            </div>
+
+                            <!-- 5. Specifications -->
+                            <div class="form-group">
+                                <label class="form-label" for="productSpecifications">Specifications</label>
+                                <textarea id="productSpecifications" name="specifications" class="form-control" rows="4">{{ product.specifications }}</textarea>
+                                <div class="form-hint">Technical hardware specifications (RAM, CPU, Display, Camera, etc.)</div>
+                            </div>
+
+                            <!-- 6. Image & Preview -->
+                            <div class="form-grid-2">
+                                <div class="form-group">
+                                    <label class="form-label" for="productImageInput">Update Product Image</label>
+                                    <input type="file" id="productImageInput" name="image" class="form-control" accept="image/*">
+                                    <div class="form-hint">Leave blank to keep existing image.</div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Current Image Preview</label>
+                                    <div class="image-preview-box" id="productImagePreview">
+                                        {% if product.image %}
+                                            <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                                        {% else %}
+                                            <i class="fas fa-image" style="color: #cbd5e1; font-size: 2rem;"></i>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 7. Availability Toggle -->
+                            <div class="form-group" style="padding-top: 10px;">
+                                <label class="form-switch">
+                                    <input type="checkbox" name="is_active" {% if product.is_active %}checked{% endif %}>
+                                    <div>
+                                        <div style="font-weight: 700;">Availability (Active in Storefront)</div>
+                                        <div style="font-size: 0.78rem; color: var(--text-muted);">Enable or disable customer visibility on store pages.</div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Submit Buttons -->
+                            <div style="display: flex; gap: 14px; margin-top: 30px; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Changes
+                                </button>
+                                <a href="{% url 'manager:product_detail' product.id %}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                                <a href="{% url 'manager:product_delete' product.id %}" class="btn btn-danger" style="margin-left: auto;">
+                                    <i class="fas fa-trash"></i> Delete Product
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{% static 'js/manager.js' %}"></script>
+</body>
+</html>

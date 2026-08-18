@@ -28,9 +28,22 @@ CACHES = {
 # EMAIL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-host
-EMAIL_HOST = env("EMAIL_HOST", default="mailpit")
+# For Gmail: Use environment variables for credentials (security)
+EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-port
-EMAIL_PORT = 1025
+EMAIL_PORT = env("EMAIL_PORT", default=587, cast=int)
+# Gmail requires TLS
+EMAIL_USE_TLS = env("EMAIL_USE_TLS", default=True, cast=bool)
+# Gmail credentials (set these in .env file)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")  # Your Gmail address
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")  # App password
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER)
+
+# If no Gmail credentials provided, fallback to Mailpit for testing
+if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
+    EMAIL_HOST = "mailpit"
+    EMAIL_PORT = 1025
+    EMAIL_USE_TLS = False
 
 # WhiteNoise
 # ------------------------------------------------------------------------------

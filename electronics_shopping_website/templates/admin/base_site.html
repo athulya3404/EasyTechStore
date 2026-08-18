@@ -1,0 +1,439 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    :root {
+      --primary-color: #ffc107;
+      --primary-hover: #ffca2c;
+      --sidebar-bg: #1a1e24;
+      --sidebar-text: #c8cdd8;
+      --sidebar-hover: #2d3139;
+      --accent-color: #6c5ce7;
+      --success-color: #00b894;
+      --danger-color: #d63031;
+      --warning-color: #fdcb6e;
+      --light-bg: #f5f7fb;
+      --border-color: #e0e3ea;
+      --text-primary: #2d3436;
+      --text-secondary: #636e72;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* Global Reset & Theme Settings */
+    body {
+      background-color: var(--light-bg) !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    /* Hide default Django header bar */
+    #header {
+      display: none !important;
+    }
+
+    /* Main Container layout */
+    #container {
+      display: flex;
+      min-height: 100vh;
+      background: var(--light-bg);
+      position: relative;
+    }
+
+    /* ==================== SIDEBAR STYLING ==================== */
+    #sidebar {
+      width: 280px;
+      background-color: var(--sidebar-bg) !important;
+      color: var(--sidebar-text);
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+      padding-top: 80px;
+      overflow-y: auto;
+      box-shadow: 4px 0 15px rgba(0, 0, 0, 0.12);
+      scrollbar-width: thin;
+      scrollbar-color: var(--sidebar-hover) transparent;
+    }
+
+    #sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #sidebar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #sidebar::-webkit-scrollbar-thumb {
+      background: var(--sidebar-hover);
+      border-radius: 3px;
+    }
+
+    /* Sidebar brand / logo top box */
+    .sidebar-brand {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 280px;
+      height: 80px;
+      background: linear-gradient(135deg, var(--primary-color) 0%, #ffb300 100%);
+      color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.3rem;
+      letter-spacing: 0.8px;
+      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+      z-index: 101;
+    }
+
+    .sidebar-brand span {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Style Django's app list inside the custom sidebar */
+    #sidebar .app-auth, 
+    #sidebar .app-category, 
+    #sidebar .app-products, 
+    #sidebar .app-orders, 
+    #sidebar .app-dashboard,
+    #sidebar .app-mfa, 
+    #sidebar .module {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      margin: 0 12px 12px 12px;
+    }
+
+    #sidebar caption, #sidebar .module caption {
+      background: transparent !important;
+      color: #8a93a4 !important;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      padding: 12px 15px;
+      border: none !important;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    #sidebar ul.tabular, #sidebar .module table, #sidebar div.flat-list {
+      background: transparent !important;
+    }
+
+    #sidebar th, #sidebar td {
+      border: none !important;
+      padding: 4px 10px !important;
+    }
+
+    #sidebar a {
+      color: var(--sidebar-text) !important;
+      text-decoration: none !important;
+      display: block;
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      transition: var(--transition);
+      position: relative;
+      font-weight: 500;
+    }
+
+    #sidebar a:hover {
+      color: #fff !important;
+      background-color: var(--sidebar-hover);
+      padding-left: 18px;
+    }
+
+    #sidebar a.active {
+      color: var(--primary-color) !important;
+      background-color: rgba(255, 193, 7, 0.1);
+    }
+
+    /* ==================== CONTENT AREA ==================== */
+    #content {
+      margin-left: 280px;
+      flex-grow: 1;
+      padding: 25px 30px;
+      background: var(--light-bg);
+      width: calc(100% - 280px);
+    }
+
+    /* ==================== TOP NAVBAR ==================== */
+    .admin-top-navbar {
+      background: #ffffff;
+      padding: 18px 24px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      border: 1px solid var(--border-color);
+    }
+
+    .admin-top-navbar h4 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .admin-top-navbar .welcome-text {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .admin-top-navbar strong {
+      color: var(--text-primary);
+    }
+
+    .admin-top-navbar a {
+      color: var(--accent-color);
+      text-decoration: none;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: var(--transition);
+    }
+
+    .admin-top-navbar a:hover {
+      background-color: rgba(108, 92, 231, 0.1);
+      color: #5540c9;
+    }
+
+    /* ==================== MODULES / CARDS ==================== */
+    .dashboard #content {
+      width: calc(100% - 280px);
+    }
+
+    .module {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+      margin-bottom: 24px;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .module:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border-color: rgba(108, 92, 231, 0.2);
+    }
+
+    .module caption {
+      background: linear-gradient(135deg, #f8f9fc 0%, #f1f3f7 100%);
+      color: var(--text-primary);
+      font-weight: 700;
+      padding: 16px 20px;
+      border-bottom: 2px solid var(--border-color);
+      font-size: 1.05rem;
+    }
+
+    .module table {
+      width: 100%;
+    }
+
+    .module tbody tr {
+      border-bottom: 1px solid var(--border-color);
+      transition: var(--transition);
+    }
+
+    .module tbody tr:hover {
+      background-color: rgba(108, 92, 231, 0.03);
+    }
+
+    .module th {
+      background-color: #f8f9fc;
+      font-weight: 700;
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+    }
+
+    .module td {
+      padding: 12px 16px;
+    }
+
+    /* ==================== BUTTONS ==================== */
+    .button, 
+    input[type=submit], 
+    input[type=button], 
+    .submit-row input,
+    button {
+      background: var(--primary-color) !important;
+      color: #000 !important;
+      font-weight: 700;
+      border-radius: 8px;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+    }
+
+    .button:hover, 
+    input[type=submit]:hover,
+    input[type=button]:hover,
+    button:hover {
+      background: var(--primary-hover) !important;
+      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .button:active,
+    input[type=submit]:active {
+      transform: translateY(0);
+    }
+
+    /* Danger/Delete buttons */
+    .button.deletelink,
+    input[type=submit].delete-button {
+      background: var(--danger-color) !important;
+      box-shadow: 0 2px 8px rgba(214, 48, 49, 0.3);
+    }
+
+    .button.deletelink:hover,
+    input[type=submit].delete-button:hover {
+      background: #c72c2f !important;
+      box-shadow: 0 4px 12px rgba(214, 48, 49, 0.4);
+    }
+
+    /* ==================== FORM ELEMENTS ==================== */
+    input[type=text],
+    input[type=password],
+    input[type=email],
+    input[type=number],
+    input[type=date],
+    select,
+    textarea {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      transition: var(--transition);
+    }
+
+    input[type=text]:focus,
+    input[type=password]:focus,
+    input[type=email]:focus,
+    input[type=number]:focus,
+    input[type=date]:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+    }
+
+    /* ==================== LINKS & NAVIGATION ==================== */
+    a {
+      color: var(--accent-color);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    a:hover {
+      color: #5540c9;
+      text-decoration: underline;
+    }
+
+    /* ==================== RESPONSIVE ==================== */
+    @media (max-width: 768px) {
+      #sidebar {
+        width: 250px;
+        padding-top: 70px;
+      }
+
+      .sidebar-brand {
+        height: 70px;
+        width: 250px;
+        font-size: 1.1rem;
+      }
+
+      #content {
+        margin-left: 250px;
+        width: calc(100% - 250px);
+        padding: 15px;
+      }
+
+      .admin-top-navbar {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+      }
+
+      .admin-top-navbar .welcome-text {
+        flex-direction: column;
+        gap: 8px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #sidebar {
+        width: 200px;
+      }
+
+      .sidebar-brand {
+        width: 200px;
+        font-size: 1rem;
+      }
+
+      #content {
+        margin-left: 200px;
+        width: calc(100% - 200px);
+        padding: 10px;
+      }
+
+      .module {
+        margin-bottom: 16px;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block branding %}
+  <div class="sidebar-brand">
+    <span>🏪 STROYKA ADMIN</span>
+  </div>
+  <div style="display:none;">
+    <h1 id="site-name"><a href="{% url 'admin:index' %}">EasyTechStore Admin Portal</a></h1>
+  </div>
+{% endblock %}
+
+{% block nav-sidebar %}{% endblock %}
+
+{% block userlinks %}
+  <div class="admin-top-navbar">
+    <div>
+      <h4>Admin Dashboard</h4>
+    </div>
+    <div class="welcome-text">
+      <span>👤 <strong>{{ request.user.email }}</strong></span>
+      <a href="{% url 'dashboard:main' %}">📊 Dashboard</a>
+      <a href="{% url 'admin:index' %}">🏠 Home</a>
+      <a href="{% url 'account_logout' %}">🚪 Log Out</a>
+    </div>
+  </div>
+{% endblock %}

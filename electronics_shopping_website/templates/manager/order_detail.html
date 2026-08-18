@@ -1,0 +1,239 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order #{{ order.id }} - EasyTech Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/manager.css' %}">
+</head>
+<body>
+    <div class="manager-wrapper">
+        {% include "manager/_sidebar.html" %}
+
+        <main class="manager-content">
+            <header class="manager-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-toggle" id="mobileSidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">
+                        <i class="fas fa-receipt" style="color: var(--primary);"></i>
+                        Order #{{ order.id }}
+                    </h1>
+                </div>
+                <div class="topbar-right">
+                    <span class="badge-pill badge-{{ order.status|lower }}" style="font-size: 0.85rem; padding: 6px 14px;">
+                        Current: {{ order.status }}
+                    </span>
+                    <a href="{% url 'manager:orders' %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> All Orders
+                    </a>
+                </div>
+            </header>
+
+            <div class="manager-container">
+                {% if messages %}
+                    <div class="manager-alert-container">
+                        {% for message in messages %}
+                            <div class="manager-alert manager-alert-{{ message.tags }}">
+                                <span><i class="fas fa-info-circle"></i> {{ message }}</span>
+                                <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:inherit;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="order-detail-grid">
+                    <!-- Left: Customer Info & Order Items -->
+                    <div>
+                        <!-- Order Items Card -->
+                        <div class="manager-card">
+                            <div class="card-top">
+                                <div class="card-top-title">
+                                    <i class="fas fa-box-open"></i> Order Purchased Items
+                                </div>
+                                <span style="font-weight: 700; color: var(--text-muted);">{{ order.items.count }} Line Item(s)</span>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="manager-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Unit Price</th>
+                                            <th>Quantity</th>
+                                            <th style="text-align: right;">Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in order_items %}
+                                            <tr>
+                                                <td>
+                                                    <div class="product-info-cell">
+                                                        {% if item.product and item.product.image %}
+                                                            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="product-thumb">
+                                                        {% else %}
+                                                            <div class="product-thumb">
+                                                                <i class="fas fa-box"></i>
+                                                            </div>
+                                                        {% endif %}
+                                                        <div>
+                                                            <div class="product-title">
+                                                                {% if item.product %}
+                                                                    <a href="{% url 'manager:product_detail' item.product.id %}">
+                                                                        {{ item.product.name }}
+                                                                    </a>
+                                                                {% else %}
+                                                                    <span style="color: var(--text-muted); font-style: italic;">Deleted Product</span>
+                                                                {% endif %}
+                                                            </div>
+                                                            <span class="product-sub">
+                                                                {% if item.product and item.product.category %}{{ item.product.category.name }}{% endif %}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td style="font-weight: 600;">
+                                                    ₹{{ item.price_at_purchase|floatformat:2 }}
+                                                </td>
+                                                <td style="font-weight: 800; font-size: 1rem;">
+                                                    {{ item.quantity }}
+                                                </td>
+                                                <td style="text-align: right; font-weight: 800; font-size: 1.05rem; color: var(--text-main);">
+                                                    ₹{{ item.get_subtotal|floatformat:2 }}
+                                                </td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="4" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                                                    No items associated with this order.
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr style="background: #f8fafc;">
+                                            <td colspan="3" style="text-align: right; font-weight: 800; font-size: 1rem; padding: 18px;">
+                                                Total Order Amount:
+                                            </td>
+                                            <td style="text-align: right; font-weight: 800; font-size: 1.4rem; color: var(--primary-dark); padding: 18px;">
+                                                ₹{{ order.get_total_price|floatformat:2 }}
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Customer Information Card -->
+                        <div class="manager-card">
+                            <div class="card-top">
+                                <div class="card-top-title">
+                                    <i class="fas fa-user-circle"></i> Customer & Shipping Details
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="info-list">
+                                    <div class="info-item">
+                                        <span class="info-label">Customer Name:</span>
+                                        <span class="info-val">
+                                            {% if order.user.name %}{{ order.user.name }}{% else %}{{ order.user.email }}{% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Customer Email:</span>
+                                        <span class="info-val" style="color: #4f46e5;">{{ order.user.email }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Order Placed On:</span>
+                                        <span class="info-val">{{ order.created_at|date:"F d, Y \a\t h:i A" }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Last Updated:</span>
+                                        <span class="info-val">{{ order.updated_at|date:"F d, Y \a\t h:i A" }}</span>
+                                    </div>
+                                    <div class="info-item" style="align-items: flex-start;">
+                                        <span class="info-label">Shipping Address:</span>
+                                        <span class="info-val" style="text-align: right; max-width: 320px; line-height: 1.5;">
+                                            {{ order.shipping_address|linebreaksbr }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Update Status Card & Summary -->
+                    <div>
+                        <!-- Update Order Status Widget -->
+                        <div class="status-update-card">
+                            <h3 style="font-size: 1.15rem; font-weight: 800; color: #111827; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-sync-alt" style="color: var(--primary);"></i>
+                                Update Order Status
+                            </h3>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
+                                Move this order through the fulfillment pipeline.
+                            </p>
+
+                            <form method="POST" action="{% url 'manager:update_order_status' order.id %}" class="status-update-form">
+                                {% csrf_token %}
+                                
+                                <div>
+                                    <label class="form-label" for="orderStatusSelect">Status</label>
+                                    <select id="orderStatusSelect" name="status" class="form-control" style="font-weight: 700; font-size: 0.95rem;">
+                                        {% for status_key, status_label in status_choices %}
+                                            <option value="{{ status_key }}" {% if order.status == status_key %}selected{% endif %}>
+                                                {{ status_label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 0.95rem;">
+                                    <i class="fas fa-check"></i> Update Status
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Order Summary Card -->
+                        <div class="manager-card" style="margin-top: 24px;">
+                            <div class="card-top">
+                                <div class="card-top-title">
+                                    <i class="fas fa-receipt"></i> Order Summary
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                                        <span style="color: var(--text-muted);">Order Number:</span>
+                                        <span style="font-weight: 800;">#{{ order.id }}</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                                        <span style="color: var(--text-muted);">Total Line Items:</span>
+                                        <span style="font-weight: 700;">{{ order.items.count }}</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                                        <span style="color: var(--text-muted);">Payment / Fulfillment:</span>
+                                        <span class="badge-pill badge-{{ order.status|lower }}">{{ order.status }}</span>
+                                    </div>
+                                    <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 4px 0;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-weight: 800; font-size: 1rem; color: var(--text-main);">Grand Total:</span>
+                                        <span style="font-weight: 800; font-size: 1.4rem; color: var(--primary-dark);">₹{{ order.get_total_price|floatformat:2 }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{% static 'js/manager.js' %}"></script>
+</body>
+</html>

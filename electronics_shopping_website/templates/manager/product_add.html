@@ -1,0 +1,168 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product - EasyTech Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/manager.css' %}">
+</head>
+<body>
+    <div class="manager-wrapper">
+        {% include "manager/_sidebar.html" %}
+
+        <main class="manager-content">
+            <header class="manager-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-toggle" id="mobileSidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">
+                        <i class="fas fa-plus-circle" style="color: var(--primary);"></i>
+                        Add New Product
+                    </h1>
+                </div>
+                <div class="topbar-right">
+                    <a href="{% url 'manager:products' %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> Back to Products
+                    </a>
+                </div>
+            </header>
+
+            <div class="manager-container">
+                {% if messages %}
+                    <div class="manager-alert-container">
+                        {% for message in messages %}
+                            <div class="manager-alert manager-alert-{{ message.tags }}">
+                                <span><i class="fas fa-info-circle"></i> {{ message }}</span>
+                                <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:inherit;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="manager-card form-layout">
+                    <div class="card-top">
+                        <div class="card-top-title">
+                            <i class="fas fa-cube"></i> Product Information
+                        </div>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);"><span style="color: var(--danger);">*</span> Required fields</span>
+                    </div>
+
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+
+                            <!-- 1. Name -->
+                            <div class="form-group">
+                                <label class="form-label" for="productName">Product Name <span class="required">*</span></label>
+                                <input type="text" id="productName" name="name" class="form-control" placeholder="e.g. iPhone 15 Pro, HP Pavilion Laptop, Sony WH-1000XM5" value="{{ form_data.name }}" required>
+                            </div>
+
+                            <!-- 2. Category & Brand -->
+                            <div class="form-grid-2">
+                                <div class="form-group">
+                                    <label class="form-label" for="productCategory">Category <span class="required">*</span></label>
+                                    <select id="productCategory" name="category" class="form-control" required>
+                                        <option value="">-- Select Category --</option>
+                                        {% for cat in categories %}
+                                            <option value="{{ cat.id }}" {% if form_data.category == cat.id|stringformat:"i" %}selected{% endif %}>
+                                                {{ cat.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="productBrand">Brand</label>
+                                    <select id="productBrand" name="brand" class="form-control">
+                                        <option value="">-- Select Brand (Optional) --</option>
+                                        {% for b in brands %}
+                                            <option value="{{ b.id }}" {% if form_data.brand == b.id|stringformat:"i" %}selected{% endif %}>
+                                                {{ b.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- 3. Price, Discount, Stock -->
+                            <div class="form-grid-3">
+                                <div class="form-group">
+                                    <label class="form-label" for="productPrice">Price (₹) <span class="required">*</span></label>
+                                    <input type="number" id="productPrice" name="price" class="form-control" placeholder="65000.00" step="0.01" min="0" value="{{ form_data.price }}" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="productDiscount">Discount (%)</label>
+                                    <input type="number" id="productDiscount" name="discount" class="form-control" placeholder="0" min="0" max="100" step="0.01" value="{{ form_data.discount|default:'0' }}">
+                                    <div class="form-hint">Percentage off base price (0-100)</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="productStock">Stock Quantity <span class="required">*</span></label>
+                                    <input type="number" id="productStock" name="stock" class="form-control" placeholder="10" min="0" value="{{ form_data.stock|default:'0' }}" required>
+                                </div>
+                            </div>
+
+                            <!-- 4. Description -->
+                            <div class="form-group">
+                                <label class="form-label" for="productDescription">Product Description</label>
+                                <textarea id="productDescription" name="description" class="form-control" rows="4" placeholder="Comprehensive product overview, highlights, and benefits...">{{ form_data.description }}</textarea>
+                            </div>
+
+                            <!-- 5. Technical Specifications -->
+                            <div class="form-group">
+                                <label class="form-label" for="productSpecifications">Specifications</label>
+                                <textarea id="productSpecifications" name="specifications" class="form-control" rows="4" placeholder="e.g. Display: 6.7-inch OLED | Processor: A17 Pro | RAM: 8GB | Storage: 256GB | Battery: 4422 mAh">{{ form_data.specifications }}</textarea>
+                                <div class="form-hint">Enter key hardware/technical specifications for the customer specs tab</div>
+                            </div>
+
+                            <!-- 6. Image Upload & Preview -->
+                            <div class="form-grid-2">
+                                <div class="form-group">
+                                    <label class="form-label" for="productImageInput">Product Image</label>
+                                    <input type="file" id="productImageInput" name="image" class="form-control" accept="image/*">
+                                    <div class="form-hint">Accepted formats: JPG, PNG, WEBP. High-resolution recommended.</div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Image Preview</label>
+                                    <div class="image-preview-box" id="productImagePreview">
+                                        <i class="fas fa-image" style="color: #cbd5e1; font-size: 2rem;"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 7. Availability Toggle -->
+                            <div class="form-group" style="padding-top: 10px;">
+                                <label class="form-switch">
+                                    <input type="checkbox" name="is_active" checked>
+                                    <div>
+                                        <div style="font-weight: 700;">Availability (Active in Storefront)</div>
+                                        <div style="font-size: 0.78rem; color: var(--text-muted);">When unchecked, product will be hidden from customer store views.</div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Submit Buttons -->
+                            <div style="display: flex; gap: 14px; margin-top: 30px; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-check"></i> Save Product
+                                </button>
+                                <a href="{% url 'manager:products' %}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{% static 'js/manager.js' %}"></script>
+</body>
+</html>

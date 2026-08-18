@@ -1,0 +1,201 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.name }} - EasyTech Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/manager.css' %}">
+</head>
+<body>
+    <div class="manager-wrapper">
+        {% include "manager/_sidebar.html" %}
+
+        <main class="manager-content">
+            <header class="manager-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-toggle" id="mobileSidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">
+                        <i class="fas fa-circle-info" style="color: var(--primary);"></i>
+                        Product Details
+                    </h1>
+                </div>
+                <div class="topbar-right">
+                    <a href="{% url 'manager:product_edit' product.id %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-pen-to-square"></i> Edit Product
+                    </a>
+                    <a href="{% url 'manager:products' %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> All Products
+                    </a>
+                </div>
+            </header>
+
+            <div class="manager-container">
+                {% if messages %}
+                    <div class="manager-alert-container">
+                        {% for message in messages %}
+                            <div class="manager-alert manager-alert-{{ message.tags }}">
+                                <span><i class="fas fa-info-circle"></i> {{ message }}</span>
+                                <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:inherit;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="order-detail-grid">
+                    <!-- Left: Main Overview & Specs -->
+                    <div>
+                        <!-- Main Card -->
+                        <div class="manager-card">
+                            <div class="card-top">
+                                <div>
+                                    <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">
+                                        {{ product.name }}
+                                    </h2>
+                                    <span style="color: var(--text-muted); font-size: 0.82rem;">ID: #{{ product.id }} • Created: {{ product.created_at|date:"M d, Y" }}</span>
+                                </div>
+                                <span class="badge-pill {% if product.is_active %}badge-active{% else %}badge-inactive{% endif %}">
+                                    {% if product.is_active %}Active in Store{% else %}Inactive / Hidden{% endif %}
+                                </span>
+                            </div>
+
+                            <div class="card-body">
+                                <div style="display: flex; gap: 24px; margin-bottom: 24px; flex-wrap: wrap;">
+                                    {% if product.image %}
+                                        <div style="width: 200px; height: 200px; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--card-border); background: #f8fafc; flex-shrink: 0;">
+                                            <img src="{{ product.image.url }}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: contain;">
+                                        </div>
+                                    {% else %}
+                                        <div style="width: 200px; height: 200px; border-radius: var(--radius-lg); border: 1px dashed var(--card-border); background: #f8fafc; display: flex; align-items: center; justify-content: center; color: #94a3b8; flex-direction: column; gap: 8px; flex-shrink: 0;">
+                                            <i class="fas fa-image" style="font-size: 3rem;"></i>
+                                            <span style="font-size: 0.8rem;">No Image</span>
+                                        </div>
+                                    {% endif %}
+
+                                    <div style="flex: 1; min-width: 240px;">
+                                        <div class="info-list">
+                                            <div class="info-item">
+                                                <span class="info-label">Category:</span>
+                                                <span class="info-val" style="color: #4f46e5;">{{ product.category.name }}</span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="info-label">Brand:</span>
+                                                <span class="info-val">
+                                                    {% if product.brand %}{{ product.brand.name }}{% else %}<span style="color: var(--text-light);">Unbranded</span>{% endif %}
+                                                </span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="info-label">Base Price:</span>
+                                                <span class="info-val">₹{{ product.price|floatformat:2 }}</span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="info-label">Discount:</span>
+                                                <span class="info-val">
+                                                    {% if product.discount > 0 %}
+                                                        <span style="color: #059669; font-weight: 800;">{{ product.discount }}% Off</span>
+                                                    {% else %}
+                                                        <span style="color: var(--text-muted);">None</span>
+                                                    {% endif %}
+                                                </span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="info-label">Effective Price:</span>
+                                                <span class="info-val" style="font-size: 1.3rem; color: var(--primary-dark); font-weight: 800;">
+                                                    ₹{{ product.get_discounted_price|floatformat:2 }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Description -->
+                                <div style="margin-top: 20px;">
+                                    <h4 style="font-size: 0.95rem; font-weight: 800; margin-bottom: 8px; color: var(--text-main);">
+                                        <i class="fas fa-align-left" style="color: var(--primary);"></i> Description
+                                    </h4>
+                                    <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; background: #f8fafc; padding: 16px; border-radius: var(--radius-md); border: 1px solid #f1f5f9;">
+                                        {% if product.description %}{{ product.description|linebreaksbr }}{% else %}<em>No description provided.</em>{% endif %}
+                                    </p>
+                                </div>
+
+                                <!-- Specifications -->
+                                <div style="margin-top: 20px;">
+                                    <h4 style="font-size: 0.95rem; font-weight: 800; margin-bottom: 8px; color: var(--text-main);">
+                                        <i class="fas fa-list-check" style="color: var(--primary);"></i> Specifications
+                                    </h4>
+                                    <div style="color: var(--text-main); font-size: 0.9rem; line-height: 1.6; background: #f8fafc; padding: 16px; border-radius: var(--radius-md); border: 1px solid #f1f5f9; white-space: pre-line;">{% if product.specifications %}{{ product.specifications }}{% else %}<em>No technical specifications listed.</em>{% endif %}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Inventory & Actions -->
+                    <div>
+                        <!-- Inventory Status Card -->
+                        <div class="manager-card">
+                            <div class="card-top">
+                                <div class="card-top-title">
+                                    <i class="fas fa-warehouse"></i> Inventory Stock
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div style="text-align: center; padding: 10px 0 20px 0;">
+                                    <div style="font-size: 2.5rem; font-weight: 800; color: var(--text-main); line-height: 1;">
+                                        {{ product.stock }}
+                                    </div>
+                                    <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-top: 4px;">
+                                        Units in Stock
+                                    </div>
+                                    <div style="margin-top: 10px;">
+                                        <span class="badge-pill {% if product.stock > 10 %}badge-in-stock{% elif product.stock > 0 %}badge-low-stock{% else %}badge-out-of-stock{% endif %}">
+                                            {{ product.stock_status }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Quick Stock Update Form -->
+                                <form method="POST" action="{% url 'manager:inventory' %}" style="border-top: 1px solid #f1f5f9; padding-top: 16px;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                                    <label class="form-label" for="stockInput">Quick Stock Update</label>
+                                    <div style="display: flex; gap: 8px;">
+                                        <input type="number" id="stockInput" name="new_stock" class="form-control" value="{{ product.stock }}" min="0" required>
+                                        <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Management Actions Card -->
+                        <div class="manager-card">
+                            <div class="card-top">
+                                <div class="card-top-title">
+                                    <i class="fas fa-sliders"></i> Actions
+                                </div>
+                            </div>
+                            <div class="card-body" style="display: flex; flex-direction: column; gap: 10px;">
+                                <a href="{% url 'manager:product_edit' product.id %}" class="btn btn-primary" style="width: 100%;">
+                                    <i class="fas fa-pen-to-square"></i> Edit Product
+                                </a>
+                                <a href="{% url 'product_detail' product.id %}" target="_blank" class="btn btn-secondary" style="width: 100%;">
+                                    <i class="fas fa-external-link-alt"></i> View on Storefront
+                                </a>
+                                <a href="{% url 'manager:product_delete' product.id %}" class="btn btn-danger" style="width: 100%;">
+                                    <i class="fas fa-trash"></i> Delete Product
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{% static 'js/manager.js' %}"></script>
+</body>
+</html>
