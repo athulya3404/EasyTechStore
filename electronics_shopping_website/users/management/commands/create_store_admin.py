@@ -37,11 +37,13 @@ class Command(BaseCommand):
             )
         
         # Ensure Superadmin email is marked verified in allauth
-        EmailAddress.objects.get_or_create(
+        ea_admin, _ = EmailAddress.objects.get_or_create(
             user=superadmin,
             email=superadmin_email,
-            defaults={'verified': True, 'primary': True}
         )
+        ea_admin.verified = True
+        ea_admin.primary = True
+        ea_admin.save()
 
         # Create Site Manager (permanent)
         site_manager, created = User.objects.get_or_create(
@@ -64,8 +66,11 @@ class Command(BaseCommand):
             )
             
         # Ensure Site Manager email is marked verified in allauth
-        EmailAddress.objects.get_or_create(
+        ea_mgr, _ = EmailAddress.objects.get_or_create(
             user=site_manager,
             email=site_manager_email,
-            defaults={'verified': True, 'primary': True}
-        )
+        )
+        ea_mgr.verified = True
+        ea_mgr.primary = True
+        ea_mgr.save()
+
