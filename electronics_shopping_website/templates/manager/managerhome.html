@@ -4,35 +4,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manager Dashboard - EasyTech Store</title>
-    <!-- FontAwesome & Custom CSS -->
+    <title>EasyTech Manager - Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Professional Blue & White Manager Stylesheet -->
     <link rel="stylesheet" href="{% static 'css/manager.css' %}">
 </head>
 <body>
     <div class="manager-wrapper">
-        <!-- Sidebar Navigation -->
+        <!-- Site Manager Sidebar -->
         {% include "manager/_sidebar.html" %}
 
-        <!-- Main Content Area -->
+        <!-- Main Dashboard Content -->
         <main class="manager-content">
-            <!-- Topbar Header -->
+            <!-- Clean Top Navigation Bar -->
             <header class="manager-topbar">
                 <div class="topbar-left">
                     <button class="mobile-toggle" id="mobileSidebarToggle" aria-label="Toggle navigation">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <h1 class="page-title">
-                        <i class="fas fa-chart-pie" style="color: var(--primary);"></i>
-                        Dashboard
-                    </h1>
+                    <div>
+                        <h1 class="page-title">
+                            <i class="fas fa-grid-2" style="color: var(--primary);"></i>
+                            Dashboard
+                        </h1>
+                    </div>
                 </div>
+
                 <div class="topbar-right">
                     <a href="{% url 'home' %}" target="_blank" class="store-preview-btn" title="View Customer Storefront">
-                        <i class="fas fa-external-link-alt"></i> Storefront
+                        <i class="fas fa-arrow-up-right-from-square"></i> Storefront
                     </a>
-                    <a href="{% url 'account_logout' %}" class="btn btn-secondary btn-sm" style="font-weight: 700; color: #dc2626;">
-                        <i class="fas fa-sign-out-alt"></i> Logout
+                    <a href="{% url 'account_logout' %}" class="btn btn-secondary btn-sm" style="color: var(--text-muted);">
+                        <i class="fas fa-arrow-right-from-bracket"></i> Logout
                     </a>
                 </div>
             </header>
@@ -44,8 +52,8 @@
                     <div class="manager-alert-container">
                         {% for message in messages %}
                             <div class="manager-alert manager-alert-{{ message.tags }}">
-                                <span><i class="fas fa-info-circle"></i> {{ message }}</span>
-                                <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:inherit;">
+                                <span><i class="fas fa-info-circle" style="margin-right: 6px;"></i> {{ message }}</span>
+                                <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:inherit;" aria-label="Close">
                                     <i class="fas fa-times"></i>
                                 </button>
                             </div>
@@ -53,12 +61,42 @@
                     </div>
                 {% endif %}
 
+                <!-- Welcome / Quick Actions Banner -->
+                <div style="background: #ffffff; border: 1px solid var(--card-border); border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; box-shadow: var(--card-shadow);">
+                    <div>
+                        <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 3px;">
+                            Welcome back, {% if request.user.name %}{{ request.user.name }}{% else %}{{ request.user.email }}{% endif %}
+                        </h2>
+                        <p style="font-size: 0.84rem; color: var(--text-muted); margin: 0;">
+                            Here is an overview of your store operations, orders, and stock levels.
+                        </p>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <a href="{% url 'manager:product_add' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> Add Product
+                        </a>
+                        <a href="{% url 'manager:category_add' %}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-folder-plus"></i> Add Category
+                        </a>
+                        <a href="{% url 'manager:brand_add' %}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-tag"></i> Add Brand
+                        </a>
+                        <a href="{% url 'manager:inventory' %}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-warehouse"></i> Inventory
+                        </a>
+                        <a href="{% url 'manager:reports' %}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-chart-line"></i> Sales Reports
+                        </a>
+                    </div>
+                </div>
+
                 <!-- ==========================================================
-                     DASHBOARD 6 SUMMARY CARDS
+                     6 PROFESSIONAL SUMMARY CARDS
                      ========================================================== -->
                 <div class="dashboard-stats-grid">
                     <!-- 1. Products Card -->
-                    <div class="stat-card products">
+                    <a href="{% url 'manager:products' %}" class="stat-card products" style="text-decoration: none;">
                         <div class="stat-header">
                             <span class="stat-title">Products</span>
                             <div class="stat-icon-wrapper">
@@ -66,76 +104,51 @@
                             </div>
                         </div>
                         <div class="stat-value">{{ total_products|default:"0" }}</div>
-                        <div class="stat-meta">
-                            <a href="{% url 'manager:products' %}" style="color: #2563eb; font-weight: 700; display:flex; align-items:center; gap:4px;">
-                                Manage catalog <i class="fas fa-arrow-right" style="font-size:0.7rem;"></i>
-                            </a>
-                        </div>
-                    </div>
+                    </a>
 
                     <!-- 2. Categories Card -->
-                    <div class="stat-card categories">
+                    <a href="{% url 'manager:categories' %}" class="stat-card categories" style="text-decoration: none;">
                         <div class="stat-header">
                             <span class="stat-title">Categories</span>
                             <div class="stat-icon-wrapper">
-                                <i class="fas fa-folder-tree"></i>
+                                <i class="fas fa-layer-group"></i>
                             </div>
                         </div>
                         <div class="stat-value">{{ total_categories|default:"0" }}</div>
-                        <div class="stat-meta">
-                            <a href="{% url 'manager:categories' %}" style="color: #7c3aed; font-weight: 700; display:flex; align-items:center; gap:4px;">
-                                View categories <i class="fas fa-arrow-right" style="font-size:0.7rem;"></i>
-                            </a>
-                        </div>
-                    </div>
+                    </a>
 
-                    <!-- 3. Total Orders Card -->
-                    <div class="stat-card orders">
+                    <!-- 3. Orders Card -->
+                    <a href="{% url 'manager:orders' %}" class="stat-card orders" style="text-decoration: none;">
                         <div class="stat-header">
                             <span class="stat-title">Orders</span>
                             <div class="stat-icon-wrapper">
-                                <i class="fas fa-cart-shopping"></i>
+                                <i class="fas fa-shopping-cart"></i>
                             </div>
                         </div>
                         <div class="stat-value">{{ total_orders|default:"0" }}</div>
-                        <div class="stat-meta">
-                            <a href="{% url 'manager:orders' %}" style="color: #059669; font-weight: 700; display:flex; align-items:center; gap:4px;">
-                                View all orders <i class="fas fa-arrow-right" style="font-size:0.7rem;"></i>
-                            </a>
-                        </div>
-                    </div>
+                    </a>
 
-                    <!-- 4. Pending Orders Card -->
-                    <div class="stat-card pending">
+                    <!-- 4. Brands Card -->
+                    <a href="{% url 'manager:brands' %}" class="stat-card brands" style="text-decoration: none;">
                         <div class="stat-header">
-                            <span class="stat-title">Pending</span>
+                            <span class="stat-title">Brands</span>
                             <div class="stat-icon-wrapper">
-                                <i class="fas fa-hourglass-half"></i>
+                                <i class="fas fa-tag"></i>
                             </div>
                         </div>
-                        <div class="stat-value">{{ pending_orders|default:"0" }}</div>
-                        <div class="stat-meta">
-                            <a href="{% url 'manager:orders' %}?status=Pending" style="color: #d97706; font-weight: 700; display:flex; align-items:center; gap:4px;">
-                                Needs attention <i class="fas fa-arrow-right" style="font-size:0.7rem;"></i>
-                            </a>
-                        </div>
-                    </div>
+                        <div class="stat-value">{{ total_brands|default:"0" }}</div>
+                    </a>
 
                     <!-- 5. Low Stock Card -->
-                    <div class="stat-card low-stock">
+                    <a href="{% url 'manager:inventory' %}?status=low_stock" class="stat-card low-stock" style="text-decoration: none;">
                         <div class="stat-header">
                             <span class="stat-title">Low Stock</span>
                             <div class="stat-icon-wrapper">
                                 <i class="fas fa-triangle-exclamation"></i>
                             </div>
                         </div>
-                        <div class="stat-value">{{ low_stock_products|default:"0" }}</div>
-                        <div class="stat-meta">
-                            <a href="{% url 'manager:inventory' %}?status=low_stock" style="color: #dc2626; font-weight: 700; display:flex; align-items:center; gap:4px;">
-                                Restock items <i class="fas fa-arrow-right" style="font-size:0.7rem;"></i>
-                            </a>
-                        </div>
-                    </div>
+                        <div class="stat-value" style="color: #dc2626;">{{ low_stock_products|default:"0" }}</div>
+                    </a>
 
                     <!-- 6. Customers Card -->
                     <div class="stat-card customers">
@@ -146,64 +159,53 @@
                             </div>
                         </div>
                         <div class="stat-value">{{ total_customers|default:"0" }}</div>
-                        <div class="stat-meta">
-                            <span style="color: var(--text-muted);">Registered accounts</span>
-                        </div>
                     </div>
                 </div>
 
-                <!-- Quick Action Buttons Bar -->
-                <div style="display: flex; gap: 12px; margin-bottom: 26px; flex-wrap: wrap;">
-                    <a href="{% url 'manager:product_add' %}" class="btn btn-primary">
-                        <i class="fas fa-plus-circle"></i> Add Product
-                    </a>
-                    <a href="{% url 'manager:category_add' %}" class="btn btn-secondary">
-                        <i class="fas fa-folder-plus"></i> Add Category
-                    </a>
-                    <a href="{% url 'manager:brand_add' %}" class="btn btn-secondary">
-                        <i class="fas fa-tag"></i> Add Brand
-                    </a>
-                    <a href="{% url 'manager:inventory' %}" class="btn btn-secondary">
-                        <i class="fas fa-cubes"></i> Update Inventory
-                    </a>
-                    <a href="{% url 'manager:reports' %}" class="btn btn-secondary" style="margin-left: auto;">
-                        <i class="fas fa-chart-line"></i> Sales Reports
-                    </a>
-                </div>
-
-                <!-- 2-Column Grid: Recent Orders & Inventory Alerts -->
-                <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 26px;">
-                    <!-- Recent Orders Table Card -->
+                <!-- ==========================================================
+                     RECENT ORDERS & LOW STOCK SECTION
+                     ========================================================== -->
+                <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px;">
+                    <!-- Recent Orders Card -->
                     <div class="manager-card">
                         <div class="card-top">
                             <div class="card-top-title">
-                                <i class="fas fa-clock-rotate-left"></i> Recent Orders
+                                <i class="fas fa-receipt"></i> Recent Orders
                             </div>
-                            <a href="{% url 'manager:orders' %}" class="btn btn-secondary btn-sm">View All</a>
+                            <a href="{% url 'manager:orders' %}" class="btn btn-secondary btn-sm">
+                                View All ({{ total_orders }})
+                            </a>
                         </div>
+
                         <div class="table-responsive">
                             <table class="manager-table">
                                 <thead>
                                     <tr>
-                                        <th>Order ID</th>
+                                        <th>Order</th>
                                         <th>Customer</th>
                                         <th>Total</th>
                                         <th>Status</th>
-                                        <th>Action</th>
+                                        <th style="text-align: right;">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% if recent_orders %}
                                         {% for order in recent_orders %}
                                             <tr>
-                                                <td style="font-weight: 800; color: #4f46e5;">#{{ order.id }}</td>
-                                                <td>
-                                                    <div style="font-weight: 700;">
-                                                        {% if order.user.name %}{{ order.user.name }}{% else %}{{ order.user.email }}{% endif %}
-                                                    </div>
-                                                    <div style="font-size: 0.75rem; color: var(--text-muted);">{{ order.created_at|date:"M d, Y" }}</div>
+                                                <td style="font-weight: 700;">
+                                                    <a href="{% url 'manager:order_detail' order.id %}" style="color: var(--primary);">
+                                                        #{{ order.id }}
+                                                    </a>
                                                 </td>
-                                                <td style="font-weight: 800; color: var(--text-main);">
+                                                <td>
+                                                    <div style="font-weight: 600; color: var(--text-main);">
+                                                        {% if order.user.name %}{{ order.user.name }}{% else %}{{ order.user.email|truncatechars:18 }}{% endif %}
+                                                    </div>
+                                                    <div style="font-size: 0.72rem; color: var(--text-muted);">
+                                                        {{ order.created_at|date:"M d, Y" }}
+                                                    </div>
+                                                </td>
+                                                <td style="font-weight: 700; color: var(--text-main);">
                                                     ₹{{ order.get_total_price|floatformat:2 }}
                                                 </td>
                                                 <td>
@@ -211,8 +213,8 @@
                                                         {{ order.status }}
                                                     </span>
                                                 </td>
-                                                <td>
-                                                    <a href="{% url 'manager:order_detail' order.id %}" class="action-btn action-btn-view" title="View details">
+                                                <td style="text-align: right;">
+                                                    <a href="{% url 'manager:order_detail' order.id %}" class="action-btn action-btn-view" title="View Details">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
                                                 </td>
@@ -221,7 +223,7 @@
                                     {% else %}
                                         <tr>
                                             <td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">
-                                                No recent orders found.
+                                                No customer orders received yet.
                                             </td>
                                         </tr>
                                     {% endif %}
@@ -233,45 +235,52 @@
                     <!-- Low Stock Alerts Card -->
                     <div class="manager-card">
                         <div class="card-top">
-                            <div class="card-top-title">
-                                <i class="fas fa-bell" style="color: #ef4444;"></i> Low Stock Attention
+                            <div class="card-top-title" style="color: #d97706;">
+                                <i class="fas fa-triangle-exclamation"></i> Low Stock Alerts
                             </div>
-                            <a href="{% url 'manager:inventory' %}" class="btn btn-secondary btn-sm">Manage</a>
+                            <a href="{% url 'manager:inventory' %}" class="btn btn-secondary btn-sm">
+                                Manage Stock
+                            </a>
                         </div>
+
                         <div class="table-responsive">
                             <table class="manager-table">
                                 <thead>
                                     <tr>
                                         <th>Product</th>
                                         <th>Stock</th>
-                                        <th>Status</th>
+                                        <th style="text-align: right;">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% if low_stock_items %}
-                                        {% for item in low_stock_items %}
+                                        {% for prod in low_stock_items %}
                                             <tr>
                                                 <td>
-                                                    <div style="font-weight: 700;">{{ item.name }}</div>
-                                                    <div style="font-size: 0.75rem; color: var(--text-muted);">
-                                                        {{ item.category.name }}{% if item.brand %} • {{ item.brand.name }}{% endif %}
-                                                    </div>
-                                                </td>
-                                                <td style="font-weight: 800; font-size: 1rem; color: #dc2626;">
-                                                    {{ item.stock }}
+                                                    <a href="{% url 'manager:product_detail' prod.id %}" class="product-title" style="display: block;">
+                                                        {{ prod.name|truncatechars:24 }}
+                                                    </a>
+                                                    <span class="product-sub">{{ prod.category.name }}</span>
                                                 </td>
                                                 <td>
-                                                    <span class="badge-pill {% if item.stock == 0 %}badge-danger{% else %}badge-warning{% endif %}">
-                                                        {{ item.stock_status }}
+                                                    <span style="font-weight: 800; font-size: 0.95rem; {% if prod.stock == 0 %}color: var(--danger);{% else %}color: var(--warning-text);{% endif %}">
+                                                        {{ prod.stock }} units
                                                     </span>
+                                                </td>
+                                                <td style="text-align: right;">
+                                                    {% if prod.stock == 0 %}
+                                                        <span class="badge-pill badge-danger">Out of Stock</span>
+                                                    {% else %}
+                                                        <span class="badge-pill badge-warning">Low Stock</span>
+                                                    {% endif %}
                                                 </td>
                                             </tr>
                                         {% endfor %}
                                     {% else %}
                                         <tr>
-                                            <td colspan="3" style="text-align: center; padding: 30px; color: var(--text-muted);">
-                                                <i class="fas fa-check-circle" style="color: #10b981; font-size: 1.5rem; margin-bottom: 6px; display:block;"></i>
-                                                All inventory levels are healthy!
+                                            <td colspan="3" style="text-align: center; padding: 30px; color: #059669; font-weight: 600;">
+                                                <i class="fas fa-circle-check" style="font-size: 1.2rem; margin-bottom: 6px; display: block;"></i>
+                                                All inventory levels are healthy.
                                             </td>
                                         </tr>
                                     {% endif %}
@@ -284,7 +293,7 @@
         </main>
     </div>
 
-    <!-- Scripts -->
+    <!-- Manager UI Scripts -->
     <script src="{% static 'js/manager.js' %}"></script>
 </body>
 </html>

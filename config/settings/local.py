@@ -37,7 +37,11 @@ EMAIL_USE_TLS = env("EMAIL_USE_TLS", default=True, cast=bool)
 # Gmail credentials (set these in .env file)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")  # Your Gmail address
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")  # App password
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER)
+DEFAULT_FROM_EMAIL = env(
+    "DJANGO_DEFAULT_FROM_EMAIL",
+    default=env("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER) or "EasyTech <noreply@localhost>",
+)
+SERVER_EMAIL = env("DJANGO_SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
 
 # If no Gmail credentials provided, fallback to Mailpit for testing
 if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:

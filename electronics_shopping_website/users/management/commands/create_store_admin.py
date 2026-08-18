@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
+from allauth.account.models import EmailAddress
 
 User = get_user_model()
 
@@ -16,16 +17,17 @@ class Command(BaseCommand):
         site_manager_password = 'Admin123'
 
         # Create Superadmin
-        if not User.objects.filter(email=superadmin_email).exists():
-            superadmin = User.objects.create_user(
-                email=superadmin_email,
-                password=superadmin_password,
-                name='Super Administrator'
-            )
-            superadmin.is_staff = True
-            superadmin.is_superuser = True
+        superadmin, created = User.objects.get_or_create(
+            email=superadmin_email,
+            defaults={
+                'name': 'Super Administrator',
+                'is_staff': True,
+                'is_superuser': True,
+            }
+        )
+        if created:
+            superadmin.set_password(superadmin_password)
             superadmin.save()
-            
             self.stdout.write(
                 self.style.SUCCESS(f'✅ Superadmin created: {superadmin_email}')
             )
@@ -33,18 +35,26 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.WARNING(f'⚠️  Superadmin already exists: {superadmin_email}')
             )
+        
+        # Ensure Superadmin email is marked verified in allauth
+        EmailAddress.objects.get_or_create(
+            user=superadmin,
+            email=superadmin_email,
+            defaults={'verified': True, 'primary': True}
+        )
 
         # Create Site Manager (permanent)
-        if not User.objects.filter(email=site_manager_email).exists():
-            site_manager = User.objects.create_user(
-                email=site_manager_email,
-                password=site_manager_password,
-                name='Site Manager'
-            )
-            site_manager.is_staff = True
-            site_manager.is_superuser = False
+        site_manager, created = User.objects.get_or_create(
+            email=site_manager_email,
+            defaults={
+                'name': 'Site Manager',
+                'is_staff': True,
+                'is_superuser': False,
+            }
+        )
+        if created:
+            site_manager.set_password(site_manager_password)
             site_manager.save()
-            
             self.stdout.write(
                 self.style.SUCCESS(f'✅ Site Manager created: {site_manager_email}')
             )
@@ -52,3 +62,10 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.WARNING(f'⚠️  Site Manager already exists: {site_manager_email}')
             )
+            
+        # Ensure Site Manager email is marked verified in allauth
+        EmailAddress.objects.get_or_create(
+            user=site_manager,
+            email=site_manager_email,
+            defaults={'verified': True, 'primary': True}
+        )

@@ -70,7 +70,7 @@ urlpatterns += [
 
     path(
         "api/docs/",
-        SpectacularSwaggerView.as_view(),
+        SpectacularSwaggerView.as_view(url_name="api-schema"),
         name="api-docs",
     ),
 ]

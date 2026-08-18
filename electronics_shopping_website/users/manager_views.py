@@ -14,6 +14,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+import json
 
 from products.models import Product, Brand
 from category.models import Category
@@ -56,6 +57,7 @@ def get_dashboard_stats():
     """Calculate and return dashboard statistics matching required 6 summary metrics"""
     total_products = Product.objects.count()
     total_categories = Category.objects.count()
+    total_brands = Brand.objects.count()
     total_orders = Order.objects.count()
     pending_orders = Order.objects.filter(status='Pending').count()
     low_stock_products = Product.objects.filter(stock__lte=10).count()
@@ -75,6 +77,7 @@ def get_dashboard_stats():
     return {
         'total_products': total_products,
         'total_categories': total_categories,
+        'total_brands': total_brands,
         'total_orders': total_orders,
         'pending_orders': pending_orders,
         'low_stock_products': low_stock_products,
@@ -631,15 +634,69 @@ def update_order_status(request, pk):
 
 @manager_required
 def sales_reports(request):
-    """Display comprehensive sales analytics and reports"""
-    stats = get_sales_stats()
-    
-    # Calculate product sales
-    orders = Order.objects.filter(status__in=['Paid', 'Shipped', 'Delivered']).prefetch_related('items__product__category')
+    """Display comprehensive sales analytics and reports directly from database"""
+    now = timezone.now()
+    range_param = request.GET.get('range', 'current_year')
+    start_date_str = request.GET.get('start_date', '').strip()
+    end_date_str = request.GET.get('end_date', '').strip()
+
+    # Base orders query
+    orders_qs = Order.objects.all()
+
+    # Apply date filters
+    if start_date_str and end_date_str:
+        orders_qs = orders_qs.filter(
+            created_at__date__gte=start_date_str,
+            created_at__date__lte=end_date_str
+        )
+    elif start_date_str:
+        orders_qs = orders_qs.filter(created_at__date__gte=start_date_str)
+    elif end_date_str:
+        orders_qs = orders_qs.filter(created_at__date__lte=end_date_str)
+    elif range_param == '30days':
+        orders_qs = orders_qs.filter(created_at__gte=now - timedelta(days=30))
+    elif range_param == '90days':
+        orders_qs = orders_qs.filter(created_at__gte=now - timedelta(days=90))
+    elif range_param == 'current_year':
+        orders_qs = orders_qs.filter(created_at__year=now.year)
+    # 'all' has no date constraint
+
+    # Filter paid/fulfilled orders for revenue and performance calculations
+    paid_orders = orders_qs.filter(
+        status__in=['Paid', 'Shipped', 'Delivered']
+    ).prefetch_related('items__product__category')
+
+    # 1. KPI Metrics
+    total_orders = orders_qs.count()
+    completed_orders = orders_qs.filter(status__in=['Shipped', 'Delivered']).count()
+    pending_orders = orders_qs.filter(status='Pending').count()
+    total_revenue = sum(float(o.get_total_price()) for o in paid_orders)
+    paid_count = paid_orders.count()
+    average_order_value = (total_revenue / paid_count) if paid_count > 0 else 0.0
+
+    # 2. Monthly Revenue Distribution (12 Months of Current Year from Database)
+    monthly_sales = [0.0] * 12
+    monthly_orders = [0] * 12
+    year_paid_orders = Order.objects.filter(
+        created_at__year=now.year,
+        status__in=['Paid', 'Shipped', 'Delivered']
+    ).prefetch_related('items')
+
+    for order in year_paid_orders:
+        month_idx = order.created_at.month - 1
+        if 0 <= month_idx < 12:
+            monthly_sales[month_idx] += float(order.get_total_price())
+            monthly_orders[month_idx] += 1
+
+    # 3. Product Sales & Category Sales
     product_sales = {}
     category_sales = {}
-    
-    for order in orders:
+
+    # Initialize all active categories with 0.0
+    for cat in Category.objects.filter(is_active=True):
+        category_sales[cat.name] = 0.0
+
+    for order in paid_orders:
         for item in order.items.all():
             if item.product:
                 pid = item.product.id
@@ -651,35 +708,57 @@ def sales_reports(request):
                     }
                 product_sales[pid]['units_sold'] += item.quantity
                 product_sales[pid]['revenue'] += float(item.get_subtotal())
-                
+
                 # Category sales
                 cat_name = item.product.category.name if item.product.category else 'Uncategorized'
                 category_sales[cat_name] = category_sales.get(cat_name, 0.0) + float(item.get_subtotal())
-    
+
     # Top 10 products sorted by revenue
     top_products = sorted(
         product_sales.values(),
         key=lambda x: x['revenue'],
         reverse=True
     )[:10]
-    
-    # Status distribution for Chart.js
+
+    # 4. Order Status Distribution
     status_distribution = {
-        'Pending': Order.objects.filter(status='Pending').count(),
-        'Paid': Order.objects.filter(status='Paid').count(),
-        'Shipped': Order.objects.filter(status='Shipped').count(),
-        'Delivered': Order.objects.filter(status='Delivered').count(),
+        'Pending': orders_qs.filter(status='Pending').count(),
+        'Paid': orders_qs.filter(status='Paid').count(),
+        'Shipped': orders_qs.filter(status='Shipped').count(),
+        'Delivered': orders_qs.filter(status='Delivered').count(),
     }
-    
+
+    # JSON serialized data for Chart.js rendering
+    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    category_names_list = list(category_sales.keys())
+    category_values_list = [round(val, 2) for val in category_sales.values()]
+    status_counts_list = [
+        status_distribution['Pending'],
+        status_distribution['Paid'],
+        status_distribution['Shipped'],
+        status_distribution['Delivered']
+    ]
+
     context = {
-        'total_revenue': stats['total_revenue'],
-        'total_orders': stats['total_orders'],
-        'completed_orders': stats['completed_orders'],
-        'pending_orders': stats['pending_orders'],
-        'average_order_value': stats['average_order_value'],
+        'total_revenue': total_revenue,
+        'total_orders': total_orders,
+        'completed_orders': completed_orders,
+        'pending_orders': pending_orders,
+        'average_order_value': average_order_value,
         'top_products': top_products,
         'category_sales': category_sales,
         'status_distribution': status_distribution,
+        'range_param': range_param,
+        'start_date': start_date_str,
+        'end_date': end_date_str,
+        'current_year': now.year,
+        # JSON data for charts
+        'monthly_sales_json': json.dumps([round(v, 2) for v in monthly_sales]),
+        'month_names_json': json.dumps(month_names),
+        'category_labels_json': json.dumps(category_names_list),
+        'category_values_json': json.dumps(category_values_list),
+        'status_counts_json': json.dumps(status_counts_list),
     }
-    
+
     return render(request, 'manager/reports.html', context)
+

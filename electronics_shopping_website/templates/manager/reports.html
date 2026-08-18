@@ -5,7 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analytics & Sales Reports - EasyTech Manager</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Professional Blue & White Manager Stylesheet -->
     <link rel="stylesheet" href="{% static 'css/manager.css' %}">
     <!-- Chart.js for interactive analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -15,28 +21,23 @@
         {% include "manager/_sidebar.html" %}
 
         <main class="manager-content">
-            <!-- Topbar with Breadcrumbs & Actions matching screenshot -->
-            <header class="manager-topbar" style="height: 80px;">
+            <!-- Topbar with Breadcrumbs & Actions -->
+            <header class="manager-topbar">
                 <div class="topbar-left">
-                    <button class="mobile-toggle" id="mobileSidebarToggle">
+                    <button class="mobile-toggle" id="mobileSidebarToggle" aria-label="Toggle navigation">
                         <i class="fas fa-bars"></i>
                     </button>
                     <div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 2px;">
-                            Dashboard <span style="margin: 0 4px;">/</span> <span style="color: var(--text-main); font-weight: 600;">Analytics</span>
-                        </div>
-                        <h1 class="page-title" style="font-size: 1.6rem; font-weight: 800;">
-                            Analytics
+                        <h1 class="page-title">
+                            <i class="fas fa-chart-line" style="color: var(--primary);"></i>
+                            Sales Reports & Analytics
                         </h1>
                     </div>
                 </div>
-                <div class="topbar-right" style="gap: 10px;">
-                    <button type="button" onclick="window.print()" class="btn btn-secondary" style="font-weight: 600; padding: 8px 18px; border-radius: 6px; font-size: 0.85rem;">
-                        Export
+                <div class="topbar-right">
+                    <button type="button" onclick="window.print()" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-print"></i> Export / Print
                     </button>
-                    <a href="{% url 'manager:home' %}" class="btn btn-primary" style="font-weight: 700; padding: 8px 22px; border-radius: 6px; font-size: 0.85rem; background: #ffc107; color: #111827;">
-                        Save
-                    </a>
                 </div>
             </header>
 
@@ -54,45 +55,59 @@
                     </div>
                 {% endif %}
 
-                <!-- Main Analytics Chart Card matching reference image -->
-                <div class="manager-card" style="margin-bottom: 26px;">
+                <!-- Main Analytics Chart Card with Live Database Filtering -->
+                <div class="manager-card" style="margin-bottom: 24px;">
                     <!-- Filter Controls Header -->
-                    <div style="padding: 18px 24px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
-                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Date range</span>
-                            <select class="form-control" style="width: 140px; padding: 6px 10px; font-size: 0.85rem;" id="dateRangeSelect">
-                                <option selected>Current year</option>
-                                <option>Last 30 days</option>
-                                <option>Last 90 days</option>
-                                <option>All time</option>
-                            </select>
+                    <form method="GET" action="{% url 'manager:reports' %}" id="reportsFilterForm">
+                        <div style="padding: 16px 20px; border-bottom: 1px solid var(--card-border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; background: #ffffff;">
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">Time range:</span>
+                                <select name="range" class="form-control" style="width: 150px; padding: 6px 10px; font-size: 0.82rem;" onchange="this.form.submit()">
+                                    <option value="current_year" {% if range_param == 'current_year' %}selected{% endif %}>Current Year ({{ current_year }})</option>
+                                    <option value="30days" {% if range_param == '30days' %}selected{% endif %}>Last 30 days</option>
+                                    <option value="90days" {% if range_param == '90days' %}selected{% endif %}>Last 90 days</option>
+                                    <option value="all" {% if range_param == 'all' %}selected{% endif %}>All Time</option>
+                                </select>
 
-                            <input type="date" class="form-control" style="width: 135px; padding: 6px 10px; font-size: 0.85rem;" value="2026-01-01">
-                            <span style="color: var(--text-light);">—</span>
-                            <input type="date" class="form-control" style="width: 135px; padding: 6px 10px; font-size: 0.85rem;" value="2026-12-31">
+                                <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600; margin-left: 6px;">Custom:</span>
+                                <input type="date" name="start_date" class="form-control" style="width: 135px; padding: 6px 8px; font-size: 0.82rem;" value="{{ start_date }}">
+                                <span style="color: var(--text-light);">—</span>
+                                <input type="date" name="end_date" class="form-control" style="width: 135px; padding: 6px 8px; font-size: 0.82rem;" value="{{ end_date }}">
+
+                                <button type="submit" class="btn btn-primary btn-sm" style="padding: 6px 12px;">
+                                    Apply
+                                </button>
+                                {% if start_date or end_date or range_param != 'current_year' %}
+                                    <a href="{% url 'manager:reports' %}" class="btn btn-secondary btn-sm" style="padding: 6px 10px;">
+                                        Reset
+                                    </a>
+                                {% endif %}
+                            </div>
+
+                            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">
+                                <i class="fas fa-database" style="color: var(--primary); margin-right: 4px;"></i> Live Database Analytics
+                            </div>
                         </div>
+                    </form>
 
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Group by</span>
-                            <select class="form-control" style="width: 100px; padding: 6px 10px; font-size: 0.85rem;">
-                                <option selected>Month</option>
-                                <option>Day</option>
-                                <option>Week</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Yellow Bar Chart Area matching reference -->
+                    <!-- Monthly Revenue Bar Chart Area -->
                     <div class="card-body" style="padding: 24px;">
-                        <div style="height: 380px; position: relative;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0;">
+                                <i class="fas fa-chart-column" style="color: var(--primary); margin-right: 6px;"></i>
+                                {{ current_year }} Monthly Revenue Trend (₹)
+                            </h3>
+                            <span style="font-size: 0.78rem; color: var(--text-muted);">Aggregated from fulfilled & paid orders</span>
+                        </div>
+                        <div style="height: 320px; position: relative;">
                             <canvas id="analyticsBarChart"></canvas>
                         </div>
                     </div>
                 </div>
 
                 <!-- 4 Core Sales KPI Cards -->
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 26px;">
-                    <div class="stat-card" style="--card-accent: #10b981;">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+                    <div class="stat-card" style="border-left: 3px solid #10b981;">
                         <div class="stat-header">
                             <span class="stat-title">Total Revenue</span>
                             <div class="stat-icon-wrapper" style="background:#ecfdf5; color:#059669;">
@@ -100,10 +115,9 @@
                             </div>
                         </div>
                         <div class="stat-value" style="color: #059669;">₹{{ total_revenue|floatformat:2 }}</div>
-                        <div class="stat-meta">Paid customer revenue</div>
                     </div>
 
-                    <div class="stat-card" style="--card-accent: #3b82f6;">
+                    <div class="stat-card" style="border-left: 3px solid #2563eb;">
                         <div class="stat-header">
                             <span class="stat-title">Total Orders</span>
                             <div class="stat-icon-wrapper" style="background:#eff6ff; color:#2563eb;">
@@ -111,10 +125,9 @@
                             </div>
                         </div>
                         <div class="stat-value">{{ total_orders }}</div>
-                        <div class="stat-meta">Lifetime orders count</div>
                     </div>
 
-                    <div class="stat-card" style="--card-accent: #8b5cf6;">
+                    <div class="stat-card" style="border-left: 3px solid #8b5cf6;">
                         <div class="stat-header">
                             <span class="stat-title">Completed Orders</span>
                             <div class="stat-icon-wrapper" style="background:#f5f3ff; color:#7c3aed;">
@@ -122,10 +135,9 @@
                             </div>
                         </div>
                         <div class="stat-value">{{ completed_orders }}</div>
-                        <div class="stat-meta">Shipped or delivered</div>
                     </div>
 
-                    <div class="stat-card" style="--card-accent: #f59e0b;">
+                    <div class="stat-card" style="border-left: 3px solid #f59e0b;">
                         <div class="stat-header">
                             <span class="stat-title">Avg Order Value</span>
                             <div class="stat-icon-wrapper" style="background:#fffbeb; color:#d97706;">
@@ -133,17 +145,16 @@
                             </div>
                         </div>
                         <div class="stat-value">₹{{ average_order_value|floatformat:2 }}</div>
-                        <div class="stat-meta">Per paid transaction</div>
                     </div>
                 </div>
 
                 <!-- 2-Column: Category Breakdown & Order Status Breakdown -->
-                <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; margin-bottom: 26px;">
+                <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; margin-bottom: 24px;">
                     <!-- Category Sales Breakdown -->
-                    <div class="manager-card">
+                    <div class="manager-card" style="margin-bottom: 0;">
                         <div class="card-top">
                             <div class="card-top-title">
-                                <i class="fas fa-chart-column"></i> Revenue by Product Category
+                                <i class="fas fa-layer-group"></i> Revenue by Product Category
                             </div>
                         </div>
                         <div class="card-body">
@@ -154,7 +165,7 @@
                     </div>
 
                     <!-- Order Fulfillment Status Distribution Chart -->
-                    <div class="manager-card">
+                    <div class="manager-card" style="margin-bottom: 0;">
                         <div class="card-top">
                             <div class="card-top-title">
                                 <i class="fas fa-chart-pie"></i> Order Status Breakdown
@@ -169,20 +180,20 @@
                 </div>
 
                 <!-- Top 10 Products by Revenue Table -->
-                <div class="manager-card">
+                <div class="manager-card" style="margin-top: 24px;">
                     <div class="card-top">
                         <div class="card-top-title">
                             <i class="fas fa-trophy" style="color: #f59e0b;"></i> Top Products by Revenue
                         </div>
-                        <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700;">Top 10 Performers</span>
+                        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Top 10 Performers</span>
                     </div>
 
                     <div class="table-responsive">
                         <table class="manager-table">
                             <thead>
                                 <tr>
-                                    <th>Rank</th>
-                                    <th>Product Name</th>
+                                    <th style="width: 70px;">Rank</th>
+                                    <th>Product</th>
                                     <th>Category</th>
                                     <th>Units Sold</th>
                                     <th style="text-align: right;">Total Generated Revenue</th>
@@ -192,7 +203,7 @@
                                 {% if top_products %}
                                     {% for item in top_products %}
                                         <tr>
-                                            <td style="font-weight: 800; color: var(--primary-dark);">
+                                            <td style="font-weight: 800; color: var(--primary);">
                                                 #{{ forloop.counter }}
                                             </td>
                                             <td>
@@ -218,11 +229,11 @@
                                                 <span style="font-weight: 600;">{{ item.product.category.name }}</span>
                                             </td>
                                             <td>
-                                                <span style="font-weight: 800; font-size: 1rem; color: var(--text-main);">
+                                                <span style="font-weight: 700; color: var(--text-main);">
                                                     {{ item.units_sold }}
                                                 </span> units
                                             </td>
-                                            <td style="text-align: right; font-weight: 800; font-size: 1.1rem; color: #059669;">
+                                            <td style="text-align: right; font-weight: 800; font-size: 1rem; color: #059669;">
                                                 ₹{{ item.revenue|floatformat:2 }}
                                             </td>
                                         </tr>
@@ -231,7 +242,7 @@
                                     <tr>
                                         <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
                                             <i class="fas fa-chart-line" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 10px; display: block;"></i>
-                                            No sales data recorded yet. As orders are placed and fulfilled, top revenue generators will appear here.
+                                            No sales recorded yet. As orders are placed and paid, performance rankings will appear here automatically.
                                         </td>
                                     </tr>
                                 {% endif %}
@@ -243,23 +254,29 @@
         </main>
     </div>
 
-    <!-- Chart Configuration Script matching user reference image -->
+    <!-- Chart Configuration Script with Pure Database Dynamic Data -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Main Analytics Bar Chart (Golden Yellow theme as in reference image)
+            const monthlyData = {{ monthly_sales_json|safe }};
+            const monthLabels = {{ month_names_json|safe }};
+            const categoryLabels = {{ category_labels_json|safe }};
+            const categoryData = {{ category_values_json|safe }};
+            const statusCounts = {{ status_counts_json|safe }};
+
+            // 1. Monthly Revenue Bar Chart (from DB)
             const analyticsCtx = document.getElementById('analyticsBarChart');
             if (analyticsCtx) {
                 new Chart(analyticsCtx, {
                     type: 'bar',
                     data: {
-                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                        labels: monthLabels,
                         datasets: [{
                             label: 'Revenue (₹)',
-                            data: [5000, 14000, 52000, 28000, 48000, 13000, 29000, 24000, 71000, 47000, 64000, 115000],
-                            backgroundColor: '#ffc107',
-                            hoverBackgroundColor: '#e0a800',
-                            borderRadius: 2,
-                            barPercentage: 0.65,
+                            data: monthlyData,
+                            backgroundColor: '#2563eb',
+                            hoverBackgroundColor: '#1d4ed8',
+                            borderRadius: 6,
+                            barPercentage: 0.6,
                             categoryPercentage: 0.8
                         }]
                     },
@@ -270,7 +287,7 @@
                             legend: { display: false },
                             tooltip: {
                                 callbacks: {
-                                    label: function(context) { return 'Revenue: ₹' + context.parsed.y.toLocaleString(); }
+                                    label: function(context) { return 'Revenue: ₹' + Number(context.parsed.y).toLocaleString(); }
                                 }
                             }
                         },
@@ -278,20 +295,14 @@
                             y: {
                                 beginAtZero: true,
                                 ticks: {
-                                    callback: function(value) { return '₹' + value.toLocaleString(); },
-                                    color: '#94a3b8',
+                                    callback: function(value) { return '₹' + Number(value).toLocaleString(); },
+                                    color: '#64748b',
                                     font: { size: 11 }
                                 },
-                                grid: {
-                                    color: '#f1f5f9'
-                                },
-                                border: { dash: [4, 4] }
+                                grid: { color: '#f1f5f9' }
                             },
                             x: {
-                                ticks: {
-                                    color: '#64748b',
-                                    font: { size: 12, weight: '500' }
-                                },
+                                ticks: { color: '#64748b', font: { size: 12, weight: '600' } },
                                 grid: { display: false }
                             }
                         }
@@ -299,52 +310,52 @@
                 });
             }
 
-            // Category Revenue Chart
+            // 2. Category Revenue Bar Chart (from DB)
             const catCtx = document.getElementById('categoryChart');
             if (catCtx) {
-                const categoryLabels = [
-                    {% for cat_name, rev in category_sales.items %}
-                        "{{ cat_name }}",
-                    {% empty %}
-                        "Laptops", "Smartphones", "Headphones", "Accessories", "Smartwatches"
-                    {% endfor %}
-                ];
-                const categoryData = [
-                    {% for cat_name, rev in category_sales.items %}
-                        {{ rev }},
-                    {% empty %}
-                        120000, 95000, 34000, 21000, 45000
-                    {% endfor %}
-                ];
-
                 new Chart(catCtx, {
                     type: 'bar',
                     data: {
-                        labels: categoryLabels,
+                        labels: categoryLabels.length > 0 ? categoryLabels : ['No Categories'],
                         datasets: [{
                             label: 'Revenue (₹)',
-                            data: categoryData,
-                            backgroundColor: '#f59e0b',
+                            data: categoryData.length > 0 ? categoryData : [0],
+                            backgroundColor: '#3b82f6',
+                            hoverBackgroundColor: '#2563eb',
                             borderRadius: 6,
+                            barPercentage: 0.5,
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) { return 'Revenue: ₹' + Number(context.parsed.y).toLocaleString(); }
+                                }
+                            }
+                        },
                         scales: {
                             y: {
                                 beginAtZero: true,
-                                ticks: { callback: function(value) { return '₹' + value.toLocaleString(); } },
+                                ticks: {
+                                    callback: function(value) { return '₹' + Number(value).toLocaleString(); },
+                                    color: '#64748b'
+                                },
                                 grid: { color: '#f1f5f9' }
                             },
-                            x: { grid: { display: false } }
+                            x: {
+                                ticks: { color: '#64748b', font: { size: 11 } },
+                                grid: { display: false }
+                            }
                         }
                     }
                 });
             }
 
-            // Order Status Donut Chart
+            // 3. Order Status Donut Chart (from DB)
             const statusCtx = document.getElementById('statusChart');
             if (statusCtx) {
                 new Chart(statusCtx, {
@@ -352,15 +363,10 @@
                     data: {
                         labels: ['Pending', 'Paid', 'Shipped', 'Delivered'],
                         datasets: [{
-                            data: [
-                                {{ status_distribution.Pending|default:"18" }},
-                                {{ status_distribution.Paid|default:"42" }},
-                                {{ status_distribution.Shipped|default:"65" }},
-                                {{ status_distribution.Delivered|default:"215" }}
-                            ],
+                            data: statusCounts,
                             backgroundColor: [
                                 '#f59e0b',
-                                '#3b82f6',
+                                '#2563eb',
                                 '#8b5cf6',
                                 '#10b981'
                             ],
@@ -374,7 +380,7 @@
                         plugins: {
                             legend: {
                                 position: 'bottom',
-                                labels: { boxWidth: 12, padding: 12 }
+                                labels: { boxWidth: 12, padding: 12, font: { size: 12, weight: '500' } }
                             }
                         },
                         cutout: '70%'
