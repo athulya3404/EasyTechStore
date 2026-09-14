@@ -1,0 +1,12 @@
+Hello {{ user.name|default:user.email }},
+
+Thank you for registering with EasyTech Store!
+
+Please confirm your email address and activate your account by clicking the link below:
+
+{{ activate_url }}
+
+If you did not register for an account on EasyTech Store, please ignore this email.
+
+Best regards,
+EasyTech Store Team

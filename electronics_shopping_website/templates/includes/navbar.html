@@ -1,54 +1,144 @@
-{% load i18n %}
-<nav class="navbar navbar-expand-md navbar-light bg-light shadow-sm mb-4">
-  <div class="container">
-    <a class="navbar-brand fw-bold text-primary" href="{% url 'home' %}">EasyTech</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+{% load static i18n %}
+<!-- Header Start -->
+<header class="main-header">
+    <div class="header-sticky">
+        <nav class="navbar navbar-expand-lg">
+            <!-- Header Action Box Start -->
+            <div class="header-action-box">
+                <!-- Logo Start -->
+                <a class="navbar-brand" href="{% url 'home' %}">
+                    <img src="{% static 'images/logo.svg' %}" alt="EasyTech Logo" style="height: 44px; width: auto;">
+                </a>
+                <!-- Logo End -->
 
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'home' %}">Home</a>
-        </li>
-        <!-- Link to your Categories -->
+                <!-- Header Search Form Box Start -->
+                <div class="header-search-form-box">
+                    <form class="header-search-form" id="headerForm" action="{% url 'home' %}#shop-section"
+                        method="GET">
+                        <div class="form-group position-relative">
+                            <input type="text" name="q" class="form-control"
+                                placeholder="Search laptops, smartphones, headphones..."
+                                value="{{ search_query|default:'' }}">
+                            <button type="submit" class="header-search-btn" aria-label="Search">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <!-- Header Search Form Box End -->
 
+                <!-- Header Action Details Start -->
+                <div class="header-action-details mobile-hide">
+                    <ul>
+                        <li>
+                            <a href="{% url 'wishlist' %}" title="View Wishlist" class="d-flex align-items-center">
+                                <img src="{% static 'images/icon-wishlist-primary.svg' %}" alt="Wishlist">
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/cart/" title="View Shopping Cart" class="d-flex align-items-center gap-2">
+                                <img src="{% static 'images/icon-cart-primary.svg' %}" alt="Cart">
+                                <span class="fw-semibold">My Cart</span>
+                            </a>
+                        </li>
+                        {% if request.user.is_staff or request.user.is_superuser %}
+                        <li>
+                            <a href="{% url 'manager:home' %}" title="Site Manager Dashboard"
+                                class="d-flex align-items-center gap-2 px-3 py-1.5 rounded-pill fw-bold text-decoration-none shadow-sm"
+                                style="background: #16181D; color: #f0f0f0; border: 1px solid #334155; font-size: 0.85rem;">
+                                <i class="fw-semibold"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <!-- Header Action Details End -->
+            </div>
+            <!-- Header Action Box End -->
 
-      </ul>
+            <!-- Main Menu Start -->
+            <div class="main-menu">
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <!-- Category Dropdown Box -->
+                    <div class="popular-categories-box">
+                        <button class="popular-categories-btn" type="button">
+                            <img src="{% static 'images/icon-popular-categories.svg' %}" alt="">Popular Categories
+                        </button>
+                        <ul class="popular-categories-list">
+                            {% if categories %}
+                            {% for cat in categories|slice:":6" %}
+                            <li><a href="{% url 'home' %}?category={{ cat.id }}#shop-section">{{ cat.name }}</a></li>
+                            {% endfor %}
+                            {% else %}
+                            <li><a href="{% url 'home' %}#shop-section">Laptops</a></li>
+                            <li><a href="{% url 'home' %}#shop-section">Smart Watches</a></li>
+                            <li><a href="{% url 'home' %}#shop-section">Projectors</a></li>
+                            <li><a href="{% url 'home' %}#shop-section">Headphones</a></li>
+                            <li><a href="{% url 'home' %}#shop-section">Smart Phones</a></li>
+                            <li><a href="{% url 'home' %}#shop-section">Audio Systems</a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
 
-      <ul class="navbar-nav align-items-center">
-        <!-- Cart Icon -->
-        <li class="nav-item me-3">
-          <a class="nav-link position-relative" href="/cart/">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-cart3"
-              viewBox="0 0 16 16">
-              <path
-                d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .49.598l-1 5a.5.5 0 0 1-.465.401l-9.397.472L4.415 11H13a.5.5 0 0 1 0 1H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l.84 4.479 9.144-.459L13.89 4H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
-            </svg>
-          </a>
-        </li>
+                    <!-- Main Navigation Links -->
+                    <div class="nav-menu-wrapper">
+                        <ul class="navbar-nav mr-auto" id="menu">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'home' %}">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'home' %}#shop-section">Shop Gadgets</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'product_compare' %}">Compare Gadgets</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'orders:my_orders' %}">My Orders</a>
+                            </li>
+                            {% if request.user.is_authenticated %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'users:detail' request.user.pk %}">My Profile</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'about' %}">About Us</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-danger fw-semibold" href="{% url 'account_logout' %}">
+                                    <i class="fa-solid fa-arrow-right-from-bracket me-1"></i> Sign Out
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'about' %}">About Us</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-primary fw-semibold" href="{% url 'account_login' %}">
+                                    <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Sign In
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
 
-        <!-- Authentication Links -->
-        {% if request.user.is_authenticated %}
-        {% if request.user.is_staff or request.user.is_superuser %}
-        <li class="nav-item me-2">
-          <a class="btn btn-warning btn-sm fw-bold" href="{% url 'manager:home' %}">
-            Manager Dashboard
-          </a>
-        </li>
-        {% endif %}
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'users:detail' request.user.pk %}">{% trans "My Profile" %}</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link text-danger" href="{% url 'account_logout' %}">{% trans "Sign Out" %}</a>
-        </li>
-        {% else %}
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'account_login' %}">{% trans "Sign In" %}</a>
-        </li>
-        {% endif %}
-      </ul>
+                    <!-- Header Right Deals CTA -->
+                    <div class="header-action-details">
+                        <ul>
+                            <li>
+                                <a href="{% url 'home' %}#shop-section" class="d-flex align-items-center gap-1">
+                                    <img src="{% static 'images/icon-sale.svg' %}" alt="Sale">
+                                    <span>Deals</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <!-- Header Action Details End -->
+                </div>
+                <div class="navbar-toggle" aria-label="Toggle navigation"></div>
+            </div>
+            <!-- Main Menu End -->
+        </nav>
+        <div class="responsive-menu"></div>
     </div>
-  </div>
-</nav>
+</header>
+<!-- Header End -->

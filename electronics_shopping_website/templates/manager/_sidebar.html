@@ -5,21 +5,22 @@
 <aside class="manager-sidebar">
     <!-- Header / Brand -->
     <div class="sidebar-header">
-        <a href="{% url 'manager:home' %}" class="sidebar-brand-title">
-            <div class="brand-icon">
-                <i class="fas fa-microchip"></i>
-            </div>
-            <div>
-                EASYTECH <span>MANAGER</span>
-            </div>
+        <a href="{% url 'manager:home' %}" class="sidebar-brand-title" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
+            <img src="{% static 'images/logo-white.svg' %}" alt="EasyTech Logo" style="height: 34px; width: auto;">
+            <span class="badge" style="background: rgba(255, 255, 255, 0.12); color: #38bdf8; font-size: 0.65rem; font-weight: 700; letter-spacing: 1px; padding: 3px 6px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.3);">MANAGER</span>
         </a>
     </div>
 
     <!-- Navigation Menu -->
     <nav class="sidebar-nav">
-        <!-- Dashboard Section -->
+        <!-- Storefront & Dashboard Section -->
         <div class="nav-group">
-            <a href="{% url 'manager:home' %}" class="sidebar-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+            <a href="{% url 'home' %}" target="_blank" class="sidebar-link" title="Open Customer Storefront">
+                <i class="fas fa-store"></i>
+                <span>View Storefront</span>
+                <i class="fas fa-arrow-up-right-from-square" style="font-size: 0.7rem; margin-left: auto; opacity: 0.6;"></i>
+            </a>
+            <a href="{% url 'manager:home' %}" class="sidebar-link {% if request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'index' %}active{% endif %}">
                 <i class="fas fa-tachometer-alt"></i>
                 <span>Dashboard</span>
             </a>
@@ -62,12 +63,30 @@
             </a>
         </div>
 
+        <!-- User Management -->
+        <div class="nav-group">
+            <div class="nav-group-title">User Management</div>
+            <a href="{% url 'manager:users' %}" class="sidebar-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                <span>Customers</span>
+            </a>
+        </div>
+
         <!-- Reports -->
         <div class="nav-group">
             <div class="nav-group-title">Reports</div>
             <a href="{% url 'manager:reports' %}" class="sidebar-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
                 <i class="fas fa-chart-line"></i>
                 <span>Sales Reports</span>
+            </a>
+        </div>
+
+        <!-- AI Assistant & Chatbot -->
+        <div class="nav-group">
+            <div class="nav-group-title">AI Assistant</div>
+            <a href="{% url 'manager:chatbot_conversations' %}" class="sidebar-link {% if 'chatbot' in request.resolver_match.url_name or 'conversation' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-robot"></i>
+                <span>Chatbot Logs</span>
             </a>
         </div>
     </nav>

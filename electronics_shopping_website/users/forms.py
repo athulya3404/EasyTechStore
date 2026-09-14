@@ -42,3 +42,33 @@ class UserSocialSignupForm(SocialSignupForm):
     Default fields will be added automatically.
     See UserSignupForm otherwise.
     """
+
+
+from django import forms
+from .models import Address
+
+
+class AddressForm(forms.ModelForm):
+    class Meta:
+        model = Address
+        fields = [
+            "full_name",
+            "phone_number",
+            "street_address",
+            "city",
+            "state",
+            "postal_code",
+            "address_type",
+            "is_default",
+        ]
+        widgets = {
+            "full_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Full Name", "required": True}),
+            "phone_number": forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone Number", "required": True}),
+            "street_address": forms.TextInput(attrs={"class": "form-control", "placeholder": "House/Flat No., Street, Area", "required": True}),
+            "city": forms.TextInput(attrs={"class": "form-control", "placeholder": "City", "required": True}),
+            "state": forms.TextInput(attrs={"class": "form-control", "placeholder": "State", "required": True}),
+            "postal_code": forms.TextInput(attrs={"class": "form-control", "placeholder": "PIN / Postal Code", "required": True}),
+            "address_type": forms.Select(attrs={"class": "form-select"}),
+            "is_default": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        }
+

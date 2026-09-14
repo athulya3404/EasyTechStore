@@ -1,136 +1,299 @@
 {% load static i18n %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
-
 <html lang="{{ LANGUAGE_CODE }}">
-  <head>
-    <meta charset="utf-8" />
+<head>
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="description" content="EasyTech - Online electronics shopping website for cutting-edge laptops, smartphones, headphones, and smart devices">
+    <meta name="author" content="EasyTech">
 
-    <meta http-equiv="x-ua-compatible" content="ie=edge" />
-
+    <!-- Page Title -->
     <title>
-      {% block title %}
-        EasyTech
-      {% endblock title %}
+        {% block title %}
+            Home - EasyTech
+        {% endblock title %}
     </title>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Favicon Icon -->
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'images/favicon.png' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&amp;display=swap" rel="stylesheet">
 
-    <meta name="csrf-token" content="{{ csrf_token }}">
-
-    <meta
-      name="description"
-      content="Online shopping website that allows customers to purchase electronic gadgets"
-    />
-
-    <meta name="author" content="Athulya" />
-
-    <link
-      rel="icon"
-      href="{% static 'images/favicons/favicon.ico' %}"
-    />
+    <!-- Bootstrap Css -->
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" media="screen">
+    <!-- SlickNav Css -->
+    <link href="{% static 'css/slicknav.min.css' %}" rel="stylesheet">
+    <!-- Swiper Css -->
+    <link rel="stylesheet" href="{% static 'css/swiper-bundle.min.css' %}">
+    <!-- Font Awesome Icon Css-->
+    <link href="{% static 'css/all.min.css' %}" rel="stylesheet" media="screen">
+    <!-- Animated Css -->
+    <link href="{% static 'css/animate.css' %}" rel="stylesheet">
+    <!-- Magnific Popup Core Css File -->
+    <link rel="stylesheet" href="{% static 'css/magnific-popup.css' %}">
+    <!-- Main Custom Css -->
+    <link href="{% static 'css/custom.css' %}" rel="stylesheet" media="screen">
+    <link href="{% static 'css/project.css' %}" rel="stylesheet">
 
     {% block css %}
-
-      <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css"
-        integrity="sha512-SbiR/eusphKoMVVXysTKG/7VseWii+Y3FdHrt0EpKgpToZeemhqHeZeLWLhJutz/2ut2Vw1uQEj2MbRF+TVBUA=="
-        crossorigin="anonymous"
-        referrerpolicy="no-referrer"
-      />
-
-      <link
-        href="{% static 'css/project.css' %}"
-        rel="stylesheet"
-      />
-
     {% endblock css %}
+</head>
+<body class="{% block bodyclass %}{% endblock bodyclass %}">
 
-    {% block javascript %}
-
-      <script
-        defer
-        src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/js/bootstrap.min.js"
-        integrity="sha512-1/RvZTcCDEUjY/CypiMz+iqqtaoQfAITmNSJY17Myp4Ms5mdxPS5UV7iOfdZoxcGhzFbOm6sntTKJppjvuhg4g=="
-        crossorigin="anonymous"
-        referrerpolicy="no-referrer">
-      </script>
-
-      <script
-        defer
-        src="{% static 'js/project.js' %}">
-      </script>
-
-      <script
-        defer
-        src="{% static 'js/cart.js' %}">
-      </script>
-
-    {% endblock javascript %}
-
-  </head>
-
-  <body class="{% block bodyclass %}{% endblock bodyclass %}">
+    <!-- Preloader Start -->
+    <div class="preloader">
+        <div class="loading-container">
+            <div class="loading"></div>
+            <div id="loading-icon"><img src="{% static 'images/loader.svg' %}" alt="EasyTech Loading..."></div>
+        </div>
+    </div>
+    <!-- Preloader End -->
 
     {% block body %}
 
-      {% include "includes/navbar.html" %}
-
-      <div class="container">
+        {% include "includes/navbar.html" %}
 
         {% if messages %}
-          {% for message in messages %}
-            <div
-              class="alert alert-dismissible
-              {% if message.tags %}
-                alert-{{ message.tags }}
-              {% endif %}"
-              role="alert"
-            >
-              {{ message }}
-
-              <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="alert"
-                aria-label="Close">
-              </button>
-
+            <div class="container mt-3">
+                {% for message in messages %}
+                    <div class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} shadow-sm" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
             </div>
-          {% endfor %}
         {% endif %}
 
         {% block main %}
-
-          {% block content %}
-            <p>
-              Use this document as a way to quick start any new project.
-            </p>
-          {% endblock content %}
-
+            <div class="container py-4">
+                {% block content %}
+                    <p>Welcome to EasyTech Store.</p>
+                {% endblock content %}
+            </div>
         {% endblock main %}
 
-      </div>
-      {% endblock body %}
+        <!-- Main Footer Start -->
+        <footer class="main-footer dark-section">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <!-- Footer Benefit Item List Start -->
+                        <div class="footer-benefit-item-list">
+                            <!-- Footer Benefit Item Start -->
+                            <div class="footer-benefit-item">
+                                <div class="icon-box">
+                                    <img src="{% static 'images/icon-footer-benefit-1.svg' %}" alt="">
+                                </div>
+                                <div class="footer-benefit-item-content">
+                                    <h2>Genuine Products!</h2>
+                                    <p>100% authentic electronics</p>
+                                </div>
+                            </div>
+                            <!-- Footer Benefit Item End -->
+                            
+                            <!-- Footer Benefit Item Start -->
+                            <div class="footer-benefit-item">
+                                <div class="icon-box">
+                                    <img src="{% static 'images/icon-footer-benefit-2.svg' %}" alt="">
+                                </div>
+                                <div class="footer-benefit-item-content">
+                                    <h2>Fast Delivery</h2>
+                                    <p>Quick and secure shipping</p>
+                                </div>
+                            </div>
+                            <!-- Footer Benefit Item End -->
+                            
+                            <!-- Footer Benefit Item Start -->
+                            <div class="footer-benefit-item">
+                                <div class="icon-box">
+                                    <img src="{% static 'images/icon-footer-benefit-3.svg' %}" alt="">
+                                </div>
+                                <div class="footer-benefit-item-content">
+                                    <h2>Secure Payments</h2>
+                                    <p>Safe online payment methods</p>
+                                </div>
+                            </div>
+                            <!-- Footer Benefit Item End -->
+                            
+                            <!-- Footer Benefit Item Start -->
+                            <div class="footer-benefit-item">
+                                <div class="icon-box">
+                                    <img src="{% static 'images/icon-footer-benefit-4.svg' %}" alt="">
+                                </div>
+                                <div class="footer-benefit-item-content">
+                                    <h2>Easy Returns</h2>
+                                    <p>Simple replacement process</p>
+                                </div>
+                            </div>
+                            <!-- Footer Benefit Item End -->
+                        </div>
+                        <!-- Footer Benefit Item List End -->
+                    </div>
+
+                    <div class="col-xl-4">
+                        <!-- About Footer Start -->
+                        <div class="about-footer">
+                            <!-- Footer Logo Start -->
+                            <div class="footer-logo">
+                                <img src="{% static 'images/logo-white.svg' %}" alt="EasyTech Logo">
+                            </div>
+                            <!-- Footer Logo End -->
+
+                            <!-- About Footer Content Start -->
+                            <div class="about-footer-content">
+                                <p>EasyTech Electronics is your premier digital destination for the latest gadgets, laptops, smartphones, and intelligent electronics.</p>
+                            </div>
+                            <!-- About Footer Content End -->
+
+                            <!-- Footer Socials Links Start -->
+                            <div class="footer-social-links">
+                                <ul>
+                                    <li><a href="#"><i class="fa-brands fa-pinterest-p"></i></a></li>
+                                    <li><a href="#"><i class="fa-brands fa-x-twitter"></i></a></li>
+                                    <li><a href="#"><i class="fa-brands fa-facebook-f"></i></a></li>
+                                    <li><a href="#"><i class="fa-brands fa-instagram"></i></a></li>
+                                </ul>
+                            </div>
+                            <!-- Footer Socials Links End -->
+                        </div>
+                        <!-- About Footer End -->
+                    </div>
+
+                    <div class="col-xl-8">
+                        <!-- Footer Links Box Start -->
+                        <div class="footer-links-box">
+                            <!-- Footer Links Start -->
+                            <div class="footer-links">
+                                <h2>Quick Links</h2>
+                                <ul>
+                                    <li><a href="{% url 'home' %}">Home</a></li>
+                                    <li><a href="{% url 'orders:my_orders' %}">My Orders</a></li>
+                                    {% if request.user.is_authenticated %}
+                                        <li><a href="{% url 'users:detail' request.user.pk %}">My Profile</a></li>
+                                        <li><a href="{% url 'wishlist' %}">Wishlist</a></li>
+                                        <li><a href="/cart/">My Cart</a></li>
+                                        <li><a href="{% url 'account_logout' %}">Sign Out</a></li>
+                                    {% else %}
+                                        <li><a href="{% url 'wishlist' %}">Wishlist</a></li>
+                                        <li><a href="/cart/">My Cart</a></li>
+                                        <li><a href="{% url 'account_login' %}">Sign In</a></li>
+                                    {% endif %}
+                                    <li><a href="{% url 'about' %}">About Us</a></li>
+                                </ul>
+                            </div>
+                            <!-- Footer Links End -->
+
+                            <!-- Footer Links Start -->
+                            <div class="footer-links">
+                                <h2>Product Categories</h2>
+                                <ul>
+                                    <li><a href="{% url 'home' %}?q=laptop#shop-section">Laptops & Computers</a></li>
+                                    <li><a href="{% url 'home' %}?q=watch#shop-section">Smart Watches</a></li>
+                                    <li><a href="{% url 'home' %}?q=audio#shop-section">Audio & Headphones</a></li>
+                                    <li><a href="{% url 'home' %}?q=phone#shop-section">Smart Phones</a></li>
+                                    <li><a href="{% url 'product_compare' %}">Compare Gadgets</a></li>
+                                </ul>
+                            </div>
+                            <!-- Footer Links End -->
+
+                            <!-- Footer Links Start -->
+                            <div class="footer-links footer-newsletter-form">
+                                <h2>Our Newsletter</h2>
+                                <p>Get exclusive offers, product launches, and technology news.</p>
+                                <form id="newslettersForm" action="#" method="POST">
+                                    <div class="form-group">
+                                        <input type="email" name="mail" class="form-control" id="mail" placeholder="Email Address" required="">
+                                        <button type="submit" class="newsletter-btn"><i class="fa-regular fa-paper-plane"></i></button>
+                                    </div>
+                                </form>
+                                <p>Subscribe For Latest Tech Updates*</p>
+                            </div>
+                            <!-- Footer Links End -->
+                        </div>
+                        <!-- Footer Links Box End -->
+                    </div>
+
+                    <div class="col-lg-12">
+                        <!-- Footer Copyright Start -->
+                        <div class="footer-copyright">
+                            <!-- Footer Copyright Text Start -->
+                            <div class="footer-copyright-text">
+                                <p>Copyright © 2026 EasyTech. All Rights Reserved.</p>
+                            </div>
+                            <!-- Footer Copyright Text End -->
+
+                            <!-- Footer Payment Options Start -->
+                            <div class="footer-payment-options">
+                                <ul>
+                                    <li><a href="#"><img src="{% static 'images/icon-payment-option-1.svg' %}" alt="Visa"></a></li>
+                                    <li><a href="#"><img src="{% static 'images/icon-payment-option-2.svg' %}" alt="Mastercard"></a></li>
+                                    <li><a href="#"><img src="{% static 'images/icon-payment-option-3.svg' %}" alt="Amex"></a></li>
+                                    <li><a href="#"><img src="{% static 'images/icon-payment-option-4.svg' %}" alt="PayPal"></a></li>
+                                    <li><a href="#"><img src="{% static 'images/icon-payment-option-5.svg' %}" alt="UPI"></a></li>
+                                    <li><a href="#"><img src="{% static 'images/icon-payment-option-6.svg' %}" alt="Apple Pay"></a></li>
+                                </ul>
+                            </div>
+                            <!-- Footer Payment Options End -->
+                        </div>
+                        <!-- Footer Copyright End -->
+                    </div>
+                </div>
+            </div>
+        </footer>
+        <!-- Main Footer End -->
+
+    {% endblock body %}
 
     {% block modal %}
     {% endblock modal %}
 
+    <!-- Jquery Library File -->
+    <script src="{% static 'js/jquery-3.7.1.min.js' %}"></script>
+    <!-- Bootstrap js file -->
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <!-- Validator js file -->
+    <script src="{% static 'js/validator.min.js' %}"></script>
+    <!-- SlickNav js file -->
+    <script src="{% static 'js/jquery.slicknav.js' %}"></script>
+    <!-- Swiper js file -->
+    <script src="{% static 'js/swiper-bundle.min.js' %}"></script>
+    <!-- Counter js file -->
+    <script src="{% static 'js/jquery.waypoints.min.js' %}"></script>
+    <script src="{% static 'js/jquery.counterup.min.js' %}"></script>
+    <!-- Magnific js file -->
+    <script src="{% static 'js/jquery.magnific-popup.min.js' %}"></script>
+    <!-- SmoothScroll -->
+    <script src="{% static 'js/SmoothScroll.js' %}"></script>
+    <!-- Parallax js -->
+    <script src="{% static 'js/parallaxie.js' %}"></script>
+    <!-- MagicCursor js file -->
+    <script src="{% static 'js/gsap.min.js' %}"></script>
+    <!-- Text Effect js file -->
+    <script src="{% static 'js/SplitText.min.js' %}"></script>
+    <script src="{% static 'js/ScrollTrigger.min.js' %}"></script>
+    <!-- YTPlayer js File -->
+    <script src="{% static 'js/jquery.mb.YTPlayer.min.js' %}"></script>
+    <!-- Wow js file -->
+    <script src="{% static 'js/wow.min.js' %}"></script>
+    <!-- Main Custom js file -->
+    <script src="{% static 'js/function.js' %}"></script>
+
+    <!-- EasyTech Core Scripts -->
+    <script src="{% static 'js/project.js' %}"></script>
+    <script src="{% static 'js/cart.js' %}"></script>
+    <script src="{% static 'js/chat_widget.js' %}?v=2.0"></script>
+
+    {% include 'includes/chat_widget.html' %}
+
+    {% block javascript %}
+    {% endblock javascript %}
+
     {% block inline_javascript %}
-
-      {% comment %}
-        Script tags with only code, no src (defer by default).
-
-        Example:
-
-        <script>
-          window.addEventListener('DOMContentLoaded', () => {
-            // Your JavaScript code here
-          });
-        </script>
-      {% endcomment %}
-
     {% endblock inline_javascript %}
 
-  </body>
+</body>
 </html>

@@ -1,0 +1,61 @@
+{% load static %}
+<!-- DOMPurify for XSS Sanitization -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js"></script>
+
+<!-- AI Chatbot Floating Trigger Button -->
+<div id="easytech-chat-launcher" class="easytech-chat-launcher" title="Chat with EasyTech AI Assistant">
+    <div class="chat-launcher-badge">AI</div>
+    <i class="fa-solid fa-robot chat-launcher-icon"></i>
+    <span class="chat-launcher-text">Ask AI</span>
+</div>
+
+<!-- AI Chatbot Widget Panel -->
+<div id="easytech-chat-panel" class="easytech-chat-panel" style="display: none;">
+    <!-- Panel Header -->
+    <div class="chat-panel-header">
+        <div class="chat-header-info">
+            <div class="chat-avatar">
+                <i class="fa-solid fa-robot"></i>
+                <span class="chat-status-dot online"></span>
+            </div>
+            <div>
+                <h6 class="chat-title mb-0">EasyTech AI Assistant</h6>
+                <small class="chat-subtitle">Powered by Local AI &amp; RAG</small>
+            </div>
+        </div>
+        <div class="chat-header-actions">
+            <button type="button" id="chat-close-btn" class="chat-btn-icon" aria-label="Close Chat">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Panel Messages Body -->
+    <div id="easytech-chat-messages" class="chat-panel-body">
+        <div class="chat-msg bot-msg">
+            <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
+            <div class="msg-bubble">
+                <p class="mb-1">Hello! 👋 I'm your <strong>EasyTech AI Assistant</strong>.</p>
+                <p class="mb-0 text-muted" style="font-size: 0.85rem;">Ask me to recommend laptops, smartphones, headphones, or compare tech specs in our store!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suggested Quick Prompts -->
+    <div class="chat-quick-suggestions">
+        <button type="button" class="quick-prompt-chip" data-prompt="Track my latest order">📦 Track My Order</button>
+        <button type="button" class="quick-prompt-chip" data-prompt="Find top gaming laptops under ₹1,00,000">💻 Gaming Laptops</button>
+        <button type="button" class="quick-prompt-chip" data-prompt="Show me wireless noise-cancelling headphones">🎧 Noise Cancelling</button>
+        <button type="button" class="quick-prompt-chip" data-prompt="What smartphones do you have with 5G?">📱 5G Phones</button>
+    </div>
+
+    <!-- Panel Input Footer -->
+    <form id="easytech-chat-form" class="chat-panel-footer">
+        <div class="chat-input-wrapper">
+            <input type="text" id="chat-input-text" class="chat-input" placeholder="Ask about products, specs, deals..." autocomplete="off" required>
+            <button type="submit" id="chat-send-btn" class="chat-send-button" aria-label="Send message">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+    </form>
+</div>

@@ -1,41 +1,288 @@
 {% extends "base.html" %}
+{% load static i18n %}
 
-{% load static %}
+{% block title %}My Account & Profile - EasyTech{% endblock title %}
 
-{% block title %}
-  User: 
-  
-    {{ object.name }}
-  
-  
-{% endblock title %}
 {% block content %}
-  <div class="container">
-    <div class="row">
-      <div class="col-sm-12">
-        <h2>
-        
-        
-          {{ object.name }}
-        
-      </h2>
-    </div>
-  </div>
-  {% if object == request.user %}
-    <!-- Action buttons -->
-    <div class="row">
-      <div class="col-sm-12">
-        <a class="btn btn-primary" href="{% url 'users:update' %}" role="button">My Info</a>
-        <a class="btn btn-primary"
-           href="{% url 'account_email' %}"
-           role="button">E-Mail</a>
-        <a class="btn btn-primary"
-           href="{% url 'mfa_index' %}"
-           role="button">MFA</a>
-        <!-- Your Stuff: Custom user template urls -->
+<div class="container py-5">
+  <!-- Profile Header Banner -->
+  <div class="card profile-header-banner border-0 shadow-sm rounded-4 mb-4 overflow-hidden" style="background: #16181D !important; border: 1px solid #282c35 !important;">
+    <div class="card-body p-4 p-md-5 text-white">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle bg-white d-flex align-items-center justify-content-center fw-bold shadow" style="width: 70px; height: 70px; font-size: 1.8rem; color: #16181D;">
+            {{ object.name|default:object.email|slice:":1"|upper }}
+          </div>
+          <div>
+            <h2 class="fw-bold mb-1 text-white">{{ object.name|default:"Valued Customer" }}</h2>
+            <p class="mb-0 text-white-50"><i class="fa-solid fa-envelope me-1"></i> {{ object.email }}</p>
+            <small class="text-white-50">Member since {{ object.date_joined|date:"F Y" }}</small>
+          </div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          {% if request.user.is_staff or request.user.is_superuser %}
+          <a class="btn btn-warning btn-sm fw-semibold px-3 rounded-pill text-dark" href="{% url 'manager:home' %}">
+            <i class="fa-solid fa-gauge-high me-1"></i> Manager Dashboard
+          </a>
+          {% endif %}
+          <a class="btn btn-light btn-sm fw-semibold px-3 rounded-pill shadow-sm" href="{% url 'users:update' %}">
+            <i class="fa-solid fa-pen-to-square me-1"></i> Edit Profile
+          </a>
+          <a class="btn btn-outline-light btn-sm fw-semibold px-3 rounded-pill" href="{% url 'account_email' %}">
+            <i class="fa-solid fa-envelope me-1"></i> E-Mail Settings
+          </a>
+          <a class="btn btn-outline-light btn-sm fw-semibold px-3 rounded-pill" href="{% url 'account_change_password' %}">
+            <i class="fa-solid fa-lock me-1"></i> Security
+          </a>
+        </div>
       </div>
     </div>
-    <!-- End Action buttons -->
-  {% endif %}
+  </div>
+
+  <!-- Summary KPI Cards -->
+  <div class="row g-3 mb-5">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 d-flex flex-row align-items-center gap-3">
+        <div class="rounded-3 bg-primary-subtle text-primary p-3 fs-3">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-bag-check" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M10.854 8.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 0 1 .708-.708L7.5 10.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>
+            <path d="M8 1a2.5 2.5 0 0 0-2.5 2.5V4h-2a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2v-.5A2.5 2.5 0 0 0 8 1zm3 3v-.5a1.5 1.5 0 0 0-3 0V4h3z"/>
+          </svg>
+        </div>
+        <div>
+          <span class="text-muted small fw-semibold text-uppercase">Total Orders</span>
+          <h3 class="fw-bold mb-0 text-dark">{{ total_orders_count }}</h3>
+          <a href="{% url 'orders:my_orders' %}" class="small text-decoration-none">View order history &rarr;</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 d-flex flex-row align-items-center gap-3">
+        <div class="rounded-3 bg-success-subtle text-success p-3 fs-3">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-geo-alt" viewBox="0 0 16 16">
+            <path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A31.493 31.493 0 0 1 8 14.58a31.481 31.481 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94zM8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10z"/>
+            <path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+          </svg>
+        </div>
+        <div>
+          <span class="text-muted small fw-semibold text-uppercase">Saved Addresses</span>
+          <h3 class="fw-bold mb-0 text-dark">{{ addresses.count }}</h3>
+          <span class="small text-muted">Delivery locations</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 d-flex flex-row align-items-center gap-3">
+        <div class="rounded-3 bg-danger-subtle text-danger p-3 fs-3">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-heart" viewBox="0 0 16 16">
+            <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15z"/>
+          </svg>
+        </div>
+        <div>
+          <span class="text-muted small fw-semibold text-uppercase">Wishlist</span>
+          <h3 class="fw-bold mb-0 text-dark">{{ wishlist_count }}</h3>
+          <a href="{% url 'wishlist' %}" class="small text-decoration-none">View saved gadgets &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- LEFT: Address Book Management -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold mb-0 text-dark">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-journal-bookmark me-1 text-primary" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M6 8V1h1v6.117L8.743 6.07a.5.5 0 0 1 .514 0L11 7.117V1h1v7a.5.5 0 0 1-.757.429L9 7.083 6.757 8.43A.5.5 0 0 1 6 8z"/>
+              <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2z"/>
+            </svg>
+            Address Book
+          </h4>
+          <button class="btn btn-primary btn-sm rounded-pill fw-semibold px-3" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+            + Add New Address
+          </button>
+        </div>
+        <p class="text-muted small mb-4">Manage your delivery locations for faster and easier checkout.</p>
+
+        {% if addresses %}
+          <div class="d-flex flex-column gap-3">
+            {% for addr in addresses %}
+              <div class="card border rounded-3 p-3 position-relative {% if addr.is_default %}border-primary bg-light-subtle{% endif %}">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <div>
+                    <strong class="text-dark fs-6">{{ addr.full_name }}</strong>
+                    <span class="badge bg-secondary rounded-pill px-2 py-1 ms-1">{{ addr.address_type }}</span>
+                    {% if addr.is_default %}
+                      <span class="badge bg-primary rounded-pill px-2 py-1 ms-1">Default</span>
+                    {% endif %}
+                  </div>
+                  <div class="dropdown">
+                    <button class="btn btn-sm btn-light border-0" type="button" data-bs-toggle="dropdown">
+                      &#8942;
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                      {% if not addr.is_default %}
+                        <li>
+                          <form method="POST" action="{% url 'users:address_set_default' addr.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-item small">Set as Default</button>
+                          </form>
+                        </li>
+                      {% endif %}
+                      <li>
+                        <button class="dropdown-item small text-danger" onclick="if(confirm('Delete address?')) document.getElementById('delete-addr-{{ addr.pk }}').submit();">
+                          Delete
+                        </button>
+                      </li>
+                    </ul>
+                    <form id="delete-addr-{{ addr.pk }}" method="POST" action="{% url 'users:address_delete' addr.pk %}" style="display: none;">
+                      {% csrf_token %}
+                    </form>
+                  </div>
+                </div>
+
+                <div class="text-muted small mb-2">
+                  {{ addr.street_address }}<br>
+                  {{ addr.city }}, {{ addr.state }} - {{ addr.postal_code }}
+                </div>
+                <div class="small fw-semibold text-dark">
+                  Phone: {{ addr.phone_number }}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-4 bg-light rounded-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-geo-alt text-muted mb-2" viewBox="0 0 16 16">
+              <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10z"/>
+            </svg>
+            <p class="text-muted small mb-2">No saved addresses yet.</p>
+            <button class="btn btn-outline-primary btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+              Add Your First Address
+            </button>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- RIGHT: Recent Orders Summary -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold mb-0 text-dark">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-clock-history me-1 text-primary" viewBox="0 0 16 16">
+              <path d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022l-.074.997zm2.004.45a7.003 7.003 0 0 0-.985-.299l.219-.976c.383.086.76.2 1.126.342l-.36.933zm1.37.71a7.01 7.01 0 0 0-.439-.27l.493-.87a8.025 8.025 0 0 1 .974.605l-.567.806zm1.42 1.054c.324.264.63.548.918.85l-.707.707a7.008 7.008 0 0 0-.81-.75l.599-.807z"/>
+            </svg>
+            Recent Orders
+          </h4>
+          <a href="{% url 'orders:my_orders' %}" class="btn btn-outline-primary btn-sm rounded-pill fw-semibold px-3">
+            View All
+          </a>
+        </div>
+        <p class="text-muted small mb-4">Your latest electronic device purchases and delivery status.</p>
+
+        {% if recent_orders %}
+          <div class="d-flex flex-column gap-3">
+            {% for order in recent_orders %}
+              <div class="card border rounded-3 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div>
+                    <span class="fw-bold text-dark fs-6">Order #{{ order.id }}</span>
+                    <small class="text-muted d-block">{{ order.created_at|date:"M d, Y" }}</small>
+                  </div>
+                  <div class="text-end">
+                    <span class="badge rounded-pill px-2.5 py-1
+                      {% if order.status == 'Paid' %}bg-success
+                      {% elif order.status == 'Shipped' %}bg-info text-dark
+                      {% elif order.status == 'Delivered' %}bg-primary
+                      {% elif order.status == 'Cancelled' %}bg-danger
+                      {% else %}bg-warning text-dark{% endif %}">
+                      {{ order.status }}
+                    </span>
+                    <div class="fw-bold text-success fs-6 mt-1">₹{{ order.total_amount|floatformat:2 }}</div>
+                  </div>
+                </div>
+                
+                <div class="small text-muted border-top pt-2 mt-1 d-flex justify-content-between align-items-center">
+                  <span>{{ order.items.count }} item{{ order.items.count|pluralize }}</span>
+                  <div>
+                    <a href="{% url 'orders:confirmation' order.id %}" class="btn btn-sm btn-link text-decoration-none p-0 me-3">Track Order</a>
+                    <a href="{% url 'orders:download_invoice' order.id %}?format=pdf" target="_blank" class="btn btn-sm btn-link text-decoration-none p-0 text-secondary">Tax Invoice (PDF)</a>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-4 bg-light rounded-3">
+            <p class="text-muted small mb-2">You haven't placed any orders yet.</p>
+            <a href="{% url 'home' %}" class="btn btn-primary btn-sm rounded-pill px-3">
+              Explore Gadgets
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Delivery Address -->
+<div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold" id="addAddressModalLabel">Add Delivery Address</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST" action="{% url 'users:address_create' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Full Name</label>
+            {{ address_form.full_name }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Phone Number</label>
+            {{ address_form.phone_number }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Street / Flat / House Address</label>
+            {{ address_form.street_address }}
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">City</label>
+              {{ address_form.city }}
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">State</label>
+              {{ address_form.state }}
+            </div>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">PIN Code</label>
+              {{ address_form.postal_code }}
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Address Type</label>
+              {{ address_form.address_type }}
+            </div>
+          </div>
+          <div class="form-check">
+            {{ address_form.is_default }}
+            <label class="form-check-label small" for="{{ address_form.is_default.id_for_label }}">
+              Make this my default delivery address
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold">Save Address</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 {% endblock content %}

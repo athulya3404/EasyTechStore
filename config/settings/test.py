@@ -15,6 +15,7 @@ SECRET_KEY = env(
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#test-runner
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
+ALLOWED_HOSTS = ["*"]
 
 # PASSWORDS
 # ------------------------------------------------------------------------------
@@ -32,7 +33,11 @@ TEMPLATES[0]["OPTIONS"]["debug"] = True  # type: ignore[index]
 
 # MEDIA
 # ------------------------------------------------------------------------------
-# https://docs.djangoproject.com/en/dev/ref/settings/#media-url
-MEDIA_URL = "http://media.testserver/"
-# Your stuff...
+# DATABASE FOR TESTS (In-Memory SQLite)
 # ------------------------------------------------------------------------------
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": ":memory:",
+    }
+}

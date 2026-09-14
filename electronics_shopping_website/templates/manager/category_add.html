@@ -23,7 +23,10 @@
                         Add New Category
                     </h1>
                 </div>
-                <div class="topbar-right">
+                <div class="topbar-right" style="display: flex; gap: 8px;">
+                    <a href="{% url 'manager:category_import' %}" class="btn btn-secondary btn-sm" style="color: #047857; background: #ecfdf5; border-color: #a7f3d0; font-weight: 700;">
+                        <i class="fas fa-file-excel"></i> Import Excel / CSV
+                    </a>
                     <a href="{% url 'manager:categories' %}" class="btn btn-secondary btn-sm">
                         <i class="fas fa-arrow-left"></i> All Categories
                     </a>

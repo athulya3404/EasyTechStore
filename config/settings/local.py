@@ -28,22 +28,22 @@ CACHES = {
 # EMAIL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-host
-# For Gmail: Use environment variables for credentials (security)
+EMAIL_BACKEND = env(
+    "DJANGO_EMAIL_BACKEND",
+    default="django.core.mail.backends.smtp.EmailBackend",
+)
 EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")
-# https://docs.djangoproject.com/en/dev/ref/settings/#email-port
 EMAIL_PORT = env("EMAIL_PORT", default=587, cast=int)
-# Gmail requires TLS
 EMAIL_USE_TLS = env("EMAIL_USE_TLS", default=True, cast=bool)
-# Gmail credentials (set these in .env file)
-EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")  # Your Gmail address
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")  # App password
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = env(
     "DJANGO_DEFAULT_FROM_EMAIL",
     default=env("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER) or "EasyTech <noreply@localhost>",
 )
 SERVER_EMAIL = env("DJANGO_SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
 
-# If no Gmail credentials provided, fallback to Mailpit for testing
+# If no credentials provided, fallback to Mailpit for testing
 if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
     EMAIL_HOST = "mailpit"
     EMAIL_PORT = 1025

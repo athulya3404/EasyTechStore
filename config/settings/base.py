@@ -10,9 +10,13 @@ BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 APPS_DIR = BASE_DIR / "electronics_shopping_website"
 env = environ.Env()
 
-READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=False)
-if READ_DOT_ENV_FILE:
-    # OS environment variables take precedence over variables from .env
+# Automatically load environment files if present
+local_env_dir = BASE_DIR / ".envs" / ".local"
+if (local_env_dir / ".django").exists():
+    env.read_env(str(local_env_dir / ".django"))
+if (local_env_dir / ".postgres").exists():
+    env.read_env(str(local_env_dir / ".postgres"))
+if (BASE_DIR / ".env").exists():
     env.read_env(str(BASE_DIR / ".env"))
 
 # GENERAL
@@ -52,10 +56,10 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": env.str("POSTGRES_DB"),
-            "USER": env.str("POSTGRES_USER"),
-            "PASSWORD": env.str("POSTGRES_PASSWORD"),
-            "HOST": env.str("POSTGRES_HOST", default="postgres"),
+            "NAME": env.str("POSTGRES_DB", default="easytechstore"),
+            "USER": env.str("POSTGRES_USER", default="postgres"),
+            "PASSWORD": env.str("POSTGRES_PASSWORD", default="postgres"),
+            "HOST": env.str("POSTGRES_HOST", default="localhost"),
             "PORT": env.str("POSTGRES_PORT", default="5432"),
         },
     }
@@ -103,7 +107,7 @@ LOCAL_APPS = [
     "products",
     "cart",
     "orders",
-    "dashboard",
+    "chatbot",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -203,6 +207,7 @@ TEMPLATES = [
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
+                "django.template.context_processors.csrf",
                 "django.template.context_processors.i18n",
                 "django.template.context_processors.media",
                 "django.template.context_processors.static",
@@ -231,7 +236,7 @@ FIXTURE_DIRS = (str(APPS_DIR / "fixtures"),)
 # https://docs.djangoproject.com/en/dev/ref/settings/#session-cookie-httponly
 SESSION_COOKIE_HTTPONLY = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#csrf-cookie-httponly
-CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False
 # https://docs.djangoproject.com/en/dev/ref/settings/#x-frame-options
 X_FRAME_OPTIONS = "DENY"
 
@@ -345,3 +350,26 @@ SPECTACULAR_SETTINGS = {
 }
 # Your stuff...
 # ------------------------------------------------------------------------------
+# Prevent TooManyFieldsSent exception on large product forms, bulk actions & imports
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 100000
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50 MB
+
+# AI Chatbot & RAG Service Settings
+# ------------------------------------------------------------------------------
+# Provider: 'ollama' (local) or 'groq' (cloud API)
+GROQ_API_KEY = env("GROQ_API_KEY", default="")
+LLM_PROVIDER = env("LLM_PROVIDER", default="groq" if GROQ_API_KEY else "ollama")
+
+# Groq Cloud Settings
+GROQ_BASE_URL = env("GROQ_BASE_URL", default="https://api.groq.com/openai/v1")
+GROQ_MODEL = env("GROQ_MODEL", default="openai/gpt-oss-20b")
+GROQ_FALLBACK_MODEL = env("GROQ_FALLBACK_MODEL", default="qwen/qwen3.8-27b")
+GROQ_TIMEOUT = env.float("GROQ_TIMEOUT", default=15.0)
+
+# Local Ollama Settings
+OLLAMA_BASE_URL = env("OLLAMA_BASE_URL", default="http://host.docker.internal:11434/v1")
+OLLAMA_MODEL = env("OLLAMA_MODEL", default="llama3.2")
+OLLAMA_FALLBACK_MODEL = env("OLLAMA_FALLBACK_MODEL", default="qwen2.5:7b")
+OLLAMA_TIMEOUT = env.float("OLLAMA_TIMEOUT", default=8.0)
+
+

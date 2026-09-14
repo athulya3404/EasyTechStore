@@ -5,56 +5,449 @@
 
 {% block content %}
 <div class="container py-5">
-  <div class="row g-5 align-items-center">
+  <div class="row g-5 align-items-start">
+    
+    <!-- Product Image & Multi-Perspective Gallery -->
     <div class="col-lg-6">
-      <div class="card border-0 shadow-sm bg-light p-4 rounded-4 text-center">
-        <img src="{% if product.image %}{{ product.image.url }}{% else %}{% static 'images/placeholder.png' %}{% endif %}" 
+      <div class="card border-0 shadow-sm bg-light p-4 rounded-4 text-center sticky-top" style="top: 20px;">
+        <img id="mainProductImage" 
+             src="{% if product.image %}{{ product.image.url }}{% else %}{% static 'images/placeholder.png' %}{% endif %}" 
              alt="{{ product.name }}" 
              class="img-fluid rounded-3" 
              style="max-height: 400px; object-fit: contain;">
+
+        {% if product.gallery_images.all %}
+        <!-- Multi-Angle Gallery Thumbnails -->
+        <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap">
+          <img src="{% if product.image %}{{ product.image.url }}{% else %}{% static 'images/placeholder.png' %}{% endif %}"
+               class="rounded-3 border border-primary p-1 gallery-thumb active-thumb" 
+               style="width: 60px; height: 60px; object-fit: contain; cursor: pointer;" 
+               onclick="document.getElementById('mainProductImage').src = this.src;">
+          {% for img in product.gallery_images.all %}
+          <img src="{{ img.image.url }}" 
+               alt="{{ img.alt_text|default:product.name }}" 
+               class="rounded-3 border p-1 gallery-thumb" 
+               style="width: 60px; height: 60px; object-fit: contain; cursor: pointer;" 
+               onclick="document.getElementById('mainProductImage').src = this.src;">
+          {% endfor %}
+        </div>
+        {% endif %}
       </div>
     </div>
 
+    <!-- Product Details -->
     <div class="col-lg-6">
-      <div class="mb-2">
+      <div class="d-flex justify-content-between align-items-center mb-2">
         <span class="badge bg-secondary px-3 py-2">{{ product.category.name }}</span>
+        <div class="d-flex gap-2 align-items-center">
+          {% if request.user.is_authenticated and request.user.is_staff or request.user.is_superuser %}
+            <a href="{% url 'manager:product_edit' product.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+              <i class="fa-solid fa-pen-to-square me-1"></i> Edit Product
+            </a>
+          {% endif %}
+          <a href="{% url 'product_compare' %}?p1={{ product.id }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+            Compare Gadget &rarr;
+          </a>
+        </div>
       </div>
       
-      <h1 class="display-5 fw-bold mb-3 text-dark">{{ product.name }}</h1>
-      <h3 class="text-success fw-bold mb-4">${{ product.price }}</h3>
+      <h1 class="display-5 fw-bold mb-2 text-dark">{{ product.name }}</h1>
+
+      <!-- Star Rating Summary -->
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <span class="badge bg-warning text-dark fs-6 px-2.5 py-1">
+          ★ {{ product.average_rating }}
+        </span>
+        <span class="text-muted small">({{ product.review_count }} verified ratings)</span>
+      </div>
+      
+      <!-- Price & Discount -->
+      <div class="mb-3">
+        {% if product.discount > 0 %}
+          <span class="display-6 text-dark fw-bold">₹{{ product.get_discounted_price|floatformat:2 }}</span>
+          <span class="text-muted text-decoration-line-through fs-5 ms-2">₹{{ product.price|floatformat:2 }}</span>
+          <span class="badge bg-danger ms-2">-{{ product.discount|floatformat:0 }}% OFF</span>
+        {% else %}
+          <span class="display-6 text-dark fw-bold">₹{{ product.price|floatformat:2 }}</span>
+        {% endif %}
+      </div>
       
       <p class="text-muted lead mb-4">
         {{ product.description|default:"No description available for this gadget yet." }}
       </p>
 
+      {% if specs %}
+      <div class="mb-4 bg-light p-4 rounded-4 border">
+        <h6 class="fw-bold mb-3 text-primary d-flex align-items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-cpu" viewBox="0 0 16 16">
+            <path d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2A2.5 2.5 0 0 1 14 4.5h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14a2.5 2.5 0 0 1-2.5 2.5v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14A2.5 2.5 0 0 1 2 11.5H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2A2.5 2.5 0 0 1 4.5 2V.5A.5.5 0 0 1 5 0m-.5 3A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13h7a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 11.5 3zM5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5z"/>
+          </svg>
+          Technical Specifications:
+        </h6>
+        <div class="row g-2">
+          {% for key, val in specs.items %}
+          <div class="col-sm-6">
+            <div class="bg-white p-2.5 rounded-3 border small">
+              <span class="text-muted d-block fw-semibold" style="font-size: 0.75rem;">{{ key }}</span>
+              <strong class="text-dark">{{ val }}</strong>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% elif product.specifications %}
+      <div class="mb-4 bg-light p-4 rounded-4 border">
+        <h6 class="fw-bold mb-2 text-primary">Technical Specifications:</h6>
+        <p class="mb-0 text-muted small" style="white-space: pre-line;">{{ product.specifications }}</p>
+      </div>
+      {% endif %}
+
       <div class="mb-4">
         <span class="text-muted">Stock Status: </span>
-        {% if product.stock > 0 %}
+        {% if product.stock > 10 %}
           <span class="text-success fw-bold">In Stock ({{ product.stock }} available)</span>
+        {% elif product.stock > 0 %}
+          <span class="text-warning fw-bold">In Stock ({{ product.stock }} remaining)</span>
         {% else %}
           <span class="text-danger fw-bold">Out of Stock</span>
         {% endif %}
       </div>
 
-      <div class="d-flex align-items-center gap-3">
+      <!-- Quantity & Purchase Buttons -->
+      <div class="d-flex align-items-center gap-3 flex-wrap mb-4">
         <div class="input-group" style="max-width: 140px;">
           <button class="btn btn-outline-secondary" type="button" onclick="decrementQty()">-</button>
           <input type="text" id="productQty" class="form-control text-center fw-bold bg-white" value="1" readonly>
           <button class="btn btn-outline-secondary" type="button" onclick="incrementQty()">+</button>
         </div>
 
-        <!-- Updated Button: Removed onclick, added data-product-id and add-to-cart-btn class -->
-        <button data-product-id="{{ product.id }}" class="btn btn-primary btn-lg px-5 fw-bold shadow-sm add-to-cart-btn">
-          Add to Cart
+        <button onclick="addCurrentProductToCart('{{ product.id }}', false)" class="btn btn-outline-primary btn-lg px-4 fw-bold shadow-sm rounded-pill" {% if product.stock == 0 %}disabled{% endif %}>
+          <i class="fa-solid fa-cart-plus me-2"></i>Add to Cart
+        </button>
+
+        <button onclick="addCurrentProductToCart('{{ product.id }}', true)" class="btn btn-amazon-primary btn-lg px-4 fw-bold shadow-sm rounded-pill" {% if product.stock == 0 %}disabled{% endif %}>
+          <i class="fa-solid fa-bolt me-2"></i>Buy Now
+        </button>
+
+        <!-- Wishlist Button -->
+        <button 
+          class="btn btn-light btn-lg rounded-circle shadow-sm border wishlist-toggle-btn {% if is_wishlisted %}text-danger{% else %}text-muted{% endif %}"
+          data-product-id="{{ product.id }}"
+          title="{% if is_wishlisted %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}"
+          style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi {% if is_wishlisted %}bi-heart-fill{% else %}bi-heart{% endif %}" viewBox="0 0 16 16">
+            {% if is_wishlisted %}
+              <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
+            {% else %}
+              <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15z"/>
+            {% endif %}
+          </svg>
         </button>
       </div>
-      
-      <div class="mt-4">
-        <a href="{% url 'home' %}" class="text-decoration-none text-muted">
-          &larr; Back to all products
-        </a>
-      </div>
+
+      <a href="{% url 'home' %}" class="text-decoration-none text-muted">
+        &larr; Back to all products
+      </a>
     </div>
   </div>
+
+  <hr class="my-5">
+
+  <!-- ============================================================ -->
+  <!-- AUTOMATED PRODUCT COMPARISON MATRIX (Same Category) -->
+  <!-- ============================================================ -->
+  {% if has_auto_comparison %}
+  <div class="card border-0 shadow-sm rounded-4 p-4 p-lg-5 mb-5 bg-white">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 border-bottom pb-3">
+      <div>
+        <span class="badge bg-primary-subtle text-primary fw-bold px-3 py-1 rounded-pill mb-2">
+          <i class="fa-solid fa-code-compare me-1"></i> Side-by-Side Comparison
+        </span>
+        <h3 class="fw-bold mb-1">Compare with Similar Gadgets</h3>
+        <p class="text-muted small mb-0">Direct spec-by-spec comparison against top alternatives in <strong>{{ product.category.name }}</strong></p>
+      </div>
+      <a href="{% url 'products:compare' %}?p1={{ product.id }}&category={{ product.category.id }}" class="btn btn-outline-primary btn-sm rounded-pill fw-bold px-3">
+        <i class="fa-solid fa-arrows-split-up-and-left me-1"></i> Open Full Comparison Matrix
+      </a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" style="min-width: 650px;">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 25%; font-weight: 700; color: #475569;" class="border-0">Feature / Spec</th>
+            <th style="width: 37%; background: rgba(79, 70, 229, 0.06); border-top: 3px solid #4f46e5;" class="text-center">
+              <span class="badge bg-primary px-2 py-1 mb-1">Current Selection</span>
+              <div class="fw-bold text-dark text-truncate" title="{{ product.name }}">{{ product.name }}</div>
+              <div class="text-primary fw-bold fs-5">₹{{ product.price|floatformat:2 }}</div>
+            </th>
+            {% for comp in competing_products %}
+              <th style="width: 38%;" class="text-center">
+                <span class="badge bg-secondary-subtle text-secondary px-2 py-1 mb-1">Alternative #{{ forloop.counter }}</span>
+                <div class="fw-bold text-dark text-truncate" title="{{ comp.name }}">
+                  <a href="{% url 'product_detail' comp.id %}" class="text-decoration-none text-dark hover-primary">{{ comp.name }}</a>
+                </div>
+                <div class="text-dark fw-bold fs-6">₹{{ comp.price|floatformat:2 }}</div>
+              </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="fw-semibold text-muted">Brand</td>
+            <td class="text-center fw-bold" style="background: rgba(79, 70, 229, 0.02);">{{ product.brand.name|default:"EasyTech" }}</td>
+            {% for comp in competing_products %}
+              <td class="text-center fw-semibold text-muted">{{ comp.brand.name|default:"EasyTech" }}</td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <td class="fw-semibold text-muted">Customer Rating</td>
+            <td class="text-center" style="background: rgba(79, 70, 229, 0.02);">
+              <span class="text-warning fw-bold">★ {{ product.average_rating|default:"5.0" }}</span>
+              <span class="text-muted small">({{ product.review_count }})</span>
+            </td>
+            {% for comp in competing_products %}
+              <td class="text-center">
+                <span class="text-warning fw-bold">★ {{ comp.average_rating|default:"5.0" }}</span>
+                <span class="text-muted small">({{ comp.review_count }})</span>
+              </td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <td class="fw-semibold text-muted">Availability</td>
+            <td class="text-center" style="background: rgba(79, 70, 229, 0.02);">
+              {% if product.stock > 0 %}
+                <span class="badge bg-success-subtle text-success">In Stock ({{ product.stock }})</span>
+              {% else %}
+                <span class="badge bg-danger-subtle text-danger">Out of Stock</span>
+              {% endif %}
+            </td>
+            {% for comp in competing_products %}
+              <td class="text-center">
+                {% if comp.stock > 0 %}
+                  <span class="badge bg-success-subtle text-success">In Stock ({{ comp.stock }})</span>
+                {% else %}
+                  <span class="badge bg-danger-subtle text-danger">Out of Stock</span>
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+
+          <!-- Dynamic Specification Rows -->
+          {% for row in auto_comparison_matrix %}
+            <tr>
+              <td class="fw-semibold text-dark">{{ row.attribute }}</td>
+              <td class="text-center fw-bold text-primary" style="background: rgba(79, 70, 229, 0.02);">{{ row.current_val }}</td>
+              {% for val in row.competitor_vals %}
+                <td class="text-center text-muted">{{ val }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+
+          <!-- Action Buttons Row -->
+          <tr>
+            <td class="fw-semibold text-muted">Actions</td>
+            <td class="text-center" style="background: rgba(79, 70, 229, 0.02);">
+              <button onclick="addCurrentProductToCart('{{ product.id }}', false)" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold" {% if product.stock == 0 %}disabled{% endif %}>
+                <i class="fa-solid fa-cart-plus me-1"></i> Add to Cart
+              </button>
+            </td>
+            {% for comp in competing_products %}
+              <td class="text-center">
+                <a href="{% url 'product_detail' comp.id %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold">
+                  View Details
+                </a>
+              </td>
+            {% endfor %}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ============================================================ -->
+  <!-- POST-PURCHASE REVIEW INVITATION PROMPT -->
+  <!-- ============================================================ -->
+  {% if show_review_prompt %}
+  <div class="alert alert-success border-0 shadow-sm rounded-4 p-4 mb-5 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+    <div class="d-flex align-items-center gap-3">
+      <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; font-size: 1.4rem;">
+        ★
+      </div>
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <h5 class="fw-bold mb-0 text-success-emphasis">You Purchased This Gadget!</h5>
+          <span class="badge bg-success text-white px-2 py-0.5 small">Verified Buyer</span>
+        </div>
+        <p class="mb-0 text-secondary small">
+          How is your <strong>{{ product.name }}</strong> performing? Share your genuine experience to help fellow tech shoppers.
+        </p>
+      </div>
+    </div>
+    <div>
+      <a href="#write-review" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm text-nowrap">
+        ⭐ Write Verified Review
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ============================================================ -->
+  <!-- CUSTOMER RATINGS & REVIEWS SECTION -->
+  <!-- ============================================================ -->
+  <div class="row g-5">
+    <div class="col-lg-5">
+      <h3 class="fw-bold mb-3">Ratings & Reviews</h3>
+      
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light text-center">
+        <h1 class="display-3 fw-bold text-dark mb-0">{{ product.average_rating }}</h1>
+        <div class="text-warning fs-4 mb-1">
+          {% if product.average_rating >= 4.5 %}★★★★★
+          {% elif product.average_rating >= 3.5 %}★★★★☆
+          {% elif product.average_rating >= 2.5 %}★★★☆☆
+          {% elif product.average_rating >= 1.5 %}★★☆☆☆
+          {% elif product.average_rating > 0 %}★☆☆☆☆
+          {% else %}☆☆☆☆☆{% endif %}
+        </div>
+        <p class="text-muted mb-3">Based on {{ product.review_count }} customer rating{{ product.review_count|pluralize }}</p>
+
+        <!-- Star Rating Breakdown Progress Bars (Amazon Style) -->
+        <div class="d-flex flex-column gap-2 text-start pt-3 border-top">
+          {% for star, data in rating_breakdown.items %}
+            <div class="d-flex align-items-center gap-2 small">
+              <span class="text-muted fw-semibold" style="width: 48px;">{{ star }} star</span>
+              <div class="progress flex-grow-1" style="height: 8px;">
+                <div class="progress-bar bg-warning" role="progressbar" {% if data.percent %}style="width: {{ data.percent }}%;"{% else %}style="width: 0%;"{% endif %} aria-valuenow="{{ data.percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+              <span class="text-muted" style="width: 38px; text-align: right;">{{ data.percent|floatformat:0 }}%</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Review Submission Form -->
+      <div class="card border-0 shadow-sm rounded-4 p-4" id="write-review">
+        <h5 class="fw-bold mb-3">
+          {% if user_review %}Edit Your Review{% else %}Write a Review{% endif %}
+        </h5>
+
+        {% if request.user.is_authenticated %}
+          <form method="POST">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Your Rating:</label>
+              <select name="rating" class="form-select rounded-3" required>
+                <option value="5" {% if user_review and user_review.rating == 5 %}selected{% endif %}>5 Stars (Excellent)</option>
+                <option value="4" {% if user_review and user_review.rating == 4 %}selected{% endif %}>4 Stars (Very Good)</option>
+                <option value="3" {% if user_review and user_review.rating == 3 %}selected{% endif %}>3 Stars (Good)</option>
+                <option value="2" {% if user_review and user_review.rating == 2 %}selected{% endif %}>2 Stars (Fair)</option>
+                <option value="1" {% if user_review and user_review.rating == 1 %}selected{% endif %}>1 Star (Poor)</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Your Feedback:</label>
+              <textarea name="comment" class="form-control rounded-3" rows="3" placeholder="Share your experience with this gadget..." required>{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 fw-bold py-2 shadow-sm">
+              {% if user_review %}Update Review{% else %}Submit Review{% endif %}
+            </button>
+          </form>
+        {% else %}
+          <div class="alert alert-info mb-0">
+            Please <a href="{% url 'account_login' %}" class="fw-bold">Sign In</a> to rate and review this product.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Existing Reviews List -->
+    <div class="col-lg-7">
+      <h4 class="fw-bold mb-4">Customer Feedback ({{ reviews.count }})</h4>
+
+      {% if reviews %}
+        <div class="d-flex flex-column gap-3">
+          {% for r in reviews %}
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 36px; height: 36px;">
+                    {{ r.user.name|default:r.user.email|slice:":1"|upper }}
+                  </div>
+                  <div>
+                    <div class="d-flex align-items-center flex-wrap gap-1">
+                      <h6 class="mb-0 fw-bold">{{ r.user.name|default:r.user.email }}</h6>
+                      {% if r.is_verified_purchase %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle py-0.5 px-2 small d-inline-flex align-items-center" title="Customer completed a verified purchase of this product">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-patch-check-fill me-1" viewBox="0 0 16 16">
+                            <path d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01zm.287 5.984-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7 8.793l2.646-2.647a.5.5 0 0 1 .708.708"/>
+                          </svg>
+                          Verified Buyer
+                        </span>
+                      {% endif %}
+                    </div>
+                    <small class="text-muted">{{ r.created_at|date:"M d, Y" }}</small>
+                  </div>
+                </div>
+                <span class="badge bg-warning text-dark fw-bold px-2 py-1">
+                  ★ {{ r.rating }} / 5
+                </span>
+              </div>
+              <p class="text-muted mb-0 mt-2">{{ r.comment }}</p>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="alert alert-light border text-center py-5 rounded-4">
+          <p class="text-muted mb-0">No customer reviews yet. Be the first to review this gadget!</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if related_products %}
+  <!-- Related Gadgets Recommendations -->
+  <div class="mt-5 pt-4 border-top">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h4 class="fw-bold mb-1">Recommended in {{ product.category.name }}</h4>
+        <p class="text-muted small mb-0">Customers also explored these similar gadgets</p>
+      </div>
+      <a href="{% url 'products:list' %}?category={{ product.category.id }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+        View All in {{ product.category.name }} →
+      </a>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+      {% for rel in related_products %}
+        <div class="col">
+          <div class="card h-100 border-0 shadow-sm rounded-4 hover-shadow transition">
+            <div class="p-3 text-center bg-light rounded-top-4" style="height: 180px;">
+              <img src="{% if rel.image %}{{ rel.image.url }}{% else %}{% static 'images/placeholder.png' %}{% endif %}" 
+                   class="img-fluid h-100 object-fit-contain" 
+                   alt="{{ rel.name }}">
+            </div>
+            <div class="card-body d-flex flex-column p-3">
+              <small class="text-muted text-uppercase fw-semibold mb-1" style="font-size: 0.75rem;">{{ rel.brand.name }}</small>
+              <a href="{% url 'product_detail' rel.slug|default:rel.id %}" class="text-decoration-none text-dark mb-2">
+                <h6 class="fw-bold text-truncate mb-0" title="{{ rel.name }}">{{ rel.name }}</h6>
+              </a>
+              <div class="mt-auto pt-2 d-flex justify-content-between align-items-center">
+                <span class="fs-5 fw-bold text-primary">₹{{ rel.price }}</span>
+                <button onclick="addToCart('{{ rel.id }}')" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                  + Add
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
 </div>
 {% endblock content %}

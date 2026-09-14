@@ -23,7 +23,10 @@
                         Add New Product
                     </h1>
                 </div>
-                <div class="topbar-right">
+                <div class="topbar-right" style="display: flex; gap: 8px;">
+                    <a href="{% url 'manager:product_import' %}" class="btn btn-secondary btn-sm" style="color: #047857; background: #ecfdf5; border-color: #a7f3d0; font-weight: 700;">
+                        <i class="fas fa-file-excel"></i> Import Excel / CSV
+                    </a>
                     <a href="{% url 'manager:products' %}" class="btn btn-secondary btn-sm">
                         <i class="fas fa-arrow-left"></i> Back to Products
                     </a>
@@ -124,7 +127,7 @@
                             <!-- 6. Image Upload & Preview -->
                             <div class="form-grid-2">
                                 <div class="form-group">
-                                    <label class="form-label" for="productImageInput">Product Image</label>
+                                    <label class="form-label" for="productImageInput">Primary Product Image</label>
                                     <input type="file" id="productImageInput" name="image" class="form-control" accept="image/*">
                                     <div class="form-hint">Accepted formats: JPG, PNG, WEBP. High-resolution recommended.</div>
                                 </div>
@@ -134,6 +137,13 @@
                                         <i class="fas fa-image" style="color: #cbd5e1; font-size: 2rem;"></i>
                                     </div>
                                 </div>
+                            </div>
+
+                            <!-- Additional Gallery Images -->
+                            <div class="form-group" style="margin-top: 15px;">
+                                <label class="form-label" for="galleryImagesInput">Upload Additional Gallery Perspectives</label>
+                                <input type="file" id="galleryImagesInput" name="gallery_images" class="form-control" accept="image/*" multiple>
+                                <div class="form-hint">Select multiple gadget photos (ports, side, back view) to display in the product gallery.</div>
                             </div>
 
                             <!-- 7. Availability Toggle -->

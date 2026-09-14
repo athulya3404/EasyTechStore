@@ -23,7 +23,10 @@
                         Products Management
                     </h1>
                 </div>
-                <div class="topbar-right">
+                <div class="topbar-right" style="display: flex; gap: 8px;">
+                    <a href="{% url 'manager:product_import' %}" class="btn btn-secondary">
+                        <i class="fas fa-file-excel" style="color: #10b981;"></i> Import Excel / CSV
+                    </a>
                     <a href="{% url 'manager:product_add' %}" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Add New Product
                     </a>
@@ -91,12 +94,41 @@
                     </div>
                 </div>
 
+                <!-- Bulk Actions Bar (Appears when items are selected) -->
+                <div id="bulkActionBar" style="display: none; align-items: center; justify-content: space-between; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 12px 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1); transition: all 0.2s ease;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 34px; height: 34px; border-radius: 50%; background: #3b82f6; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 0.95rem;">
+                            <i class="fas fa-check-double"></i>
+                        </div>
+                        <div>
+                            <span id="selectedCountText" style="font-weight: 800; color: #1e3a8a; font-size: 0.95rem;">0 products selected</span>
+                            <span style="font-size: 0.8rem; color: #3b82f6; margin-left: 8px;">Ready for bulk management</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button type="button" id="deselectAllBtn" class="btn btn-secondary btn-sm" style="background: #ffffff; font-weight: 600;">
+                            <i class="fas fa-xmark"></i> Deselect All
+                        </button>
+                        <button type="button" id="openBulkDeleteModalBtn" class="btn btn-danger btn-sm" style="background: #dc2626; border-color: #dc2626; color: #ffffff; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px;">
+                            <i class="fas fa-trash-can"></i> Delete Selected (<span id="selectedCountBadge">0</span>)
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Products Table Card -->
                 <div class="manager-card">
                     <div class="table-responsive">
                         <table class="manager-table">
                             <thead>
                                 <tr>
+                                    <th style="width: 44px; text-align: center; padding-left: 14px; padding-right: 14px;">
+                                        <input 
+                                            type="checkbox" 
+                                            id="selectAllCheckbox" 
+                                            title="Select all products on page"
+                                            style="width: 17px; height: 17px; cursor: pointer; accent-color: var(--primary);"
+                                        >
+                                    </th>
                                     <th>Product</th>
                                     <th>Category</th>
                                     <th>Brand</th>
@@ -109,7 +141,17 @@
                             <tbody>
                                 {% if products %}
                                     {% for product in products %}
-                                        <tr>
+                                        <tr class="product-row" id="product_row_{{ product.id }}">
+                                            <td style="width: 44px; text-align: center; padding-left: 14px; padding-right: 14px;">
+                                                <input 
+                                                    type="checkbox" 
+                                                    class="product-row-checkbox" 
+                                                    value="{{ product.id }}" 
+                                                    data-name="{{ product.name }}"
+                                                    data-category="{{ product.category.name }}"
+                                                    style="width: 17px; height: 17px; cursor: pointer; accent-color: var(--primary);"
+                                                >
+                                            </td>
                                             <td>
                                                 <div class="product-info-cell">
                                                     {% if product.image %}
@@ -148,9 +190,18 @@
                                                 {% endif %}
                                             </td>
                                             <td>
-                                                <span style="font-weight: 800; font-size: 0.95rem; {% if product.stock == 0 %}color: #dc2626;{% elif product.stock <= 10 %}color: #d97706;{% else %}color: #059669;{% endif %}">
+                                                <div style="font-weight: 800; font-size: 0.95rem; {% if product.stock == 0 %}color: #dc2626;{% elif product.stock <= 5 %}color: #b91c1c;{% elif product.stock <= 10 %}color: #d97706;{% else %}color: #059669;{% endif %}">
                                                     {{ product.stock }} units
-                                                </span>
+                                                </div>
+                                                {% if product.stock == 0 %}
+                                                    <span class="badge-pill badge-out-of-stock" style="font-size: 0.68rem; padding: 2px 6px;">Out of Stock</span>
+                                                {% elif product.stock <= 5 %}
+                                                    <span class="badge-pill" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size: 0.68rem; padding: 2px 6px; font-weight:700;">
+                                                        <i class="fas fa-triangle-exclamation"></i> Urgent Reorder
+                                                    </span>
+                                                {% elif product.stock <= 10 %}
+                                                    <span class="badge-pill badge-low-stock" style="font-size: 0.68rem; padding: 2px 6px;">Low Stock</span>
+                                                {% endif %}
                                             </td>
                                             <td>
                                                 <span class="badge-pill {% if product.is_active %}badge-active{% else %}badge-inactive{% endif %}">
@@ -174,7 +225,7 @@
                                     {% endfor %}
                                 {% else %}
                                     <tr>
-                                        <td colspan="7">
+                                        <td colspan="8">
                                             <div class="empty-state">
                                                 <div class="empty-icon">
                                                     <i class="fas fa-box-open"></i>
@@ -196,6 +247,191 @@
         </main>
     </div>
 
+    <!-- Bulk Delete Confirmation Modal -->
+    <div id="bulkDeleteModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: #ffffff; border-radius: 16px; width: 100%; max-width: 480px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden;">
+            <div style="padding: 26px 24px; text-align: center;">
+                <div style="width: 58px; height: 58px; margin: 0 auto 16px; background: #fee2e2; color: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    <i class="fas fa-triangle-exclamation"></i>
+                </div>
+                <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-bottom: 8px;">Confirm Bulk Deletion</h3>
+                <p style="font-size: 0.9rem; color: #64748b; line-height: 1.5; margin-bottom: 16px;">
+                    Are you sure you want to permanently delete <strong id="modalSelectedCountText" style="color: #dc2626;">0 products</strong>?
+                    This will remove all selected inventory and catalog records from your store.
+                </p>
+                <div id="modalSelectedListPreview" style="max-height: 130px; overflow-y: auto; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; font-size: 0.82rem; text-align: left; margin-bottom: 22px;">
+                    <!-- Selected product items listed here -->
+                </div>
+                <form id="bulkDeleteForm" method="POST" action="{% url 'manager:product_bulk_delete' %}">
+                    {% csrf_token %}
+                    <div id="bulkDeleteHiddenInputs"></div>
+                    <div style="display: flex; gap: 12px; justify-content: center;">
+                        <button type="button" id="closeModalBtn" class="btn btn-secondary" style="flex: 1; padding: 11px;">
+                            Cancel
+                        </button>
+                        <button type="submit" id="confirmDeleteSubmitBtn" class="btn btn-danger" style="flex: 1; padding: 11px; background: #dc2626; border-color: #dc2626; color: #ffffff; font-weight: 700;">
+                            <i class="fas fa-trash"></i> Yes, Delete Products
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="{% static 'js/manager.js' %}"></script>
+    <script>
+        (function() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const rowCheckboxes = document.querySelectorAll('.product-row-checkbox');
+            const bulkActionBar = document.getElementById('bulkActionBar');
+            const selectedCountText = document.getElementById('selectedCountText');
+            const selectedCountBadge = document.getElementById('selectedCountBadge');
+            const deselectAllBtn = document.getElementById('deselectAllBtn');
+            const openBulkDeleteModalBtn = document.getElementById('openBulkDeleteModalBtn');
+            
+            const bulkDeleteModal = document.getElementById('bulkDeleteModal');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const modalSelectedCountText = document.getElementById('modalSelectedCountText');
+            const modalSelectedListPreview = document.getElementById('modalSelectedListPreview');
+            const bulkDeleteHiddenInputs = document.getElementById('bulkDeleteHiddenInputs');
+
+            function getSelectedCheckboxes() {
+                return Array.from(rowCheckboxes).filter(cb => cb.checked);
+            }
+
+            function updateBulkActionUI() {
+                const selected = getSelectedCheckboxes();
+                const count = selected.length;
+                const total = rowCheckboxes.length;
+
+                if (count > 0) {
+                    bulkActionBar.style.display = 'flex';
+                    selectedCountText.textContent = `${count} product${count > 1 ? 's' : ''} selected`;
+                    selectedCountBadge.textContent = count;
+                } else {
+                    bulkActionBar.style.display = 'none';
+                }
+
+                // Update row visual highlighting
+                rowCheckboxes.forEach(cb => {
+                    const row = document.getElementById(`product_row_${cb.value}`);
+                    if (row) {
+                        if (cb.checked) {
+                            row.style.backgroundColor = '#eff6ff';
+                        } else {
+                            row.style.backgroundColor = '';
+                        }
+                    }
+                });
+
+                // Update select all checkbox state
+                if (selectAllCheckbox) {
+                    if (count === 0) {
+                        selectAllCheckbox.checked = false;
+                        selectAllCheckbox.indeterminate = false;
+                    } else if (count === total) {
+                        selectAllCheckbox.checked = true;
+                        selectAllCheckbox.indeterminate = false;
+                    } else {
+                        selectAllCheckbox.checked = false;
+                        selectAllCheckbox.indeterminate = true;
+                    }
+                }
+            }
+
+            // Master Select All
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function() {
+                    const shouldCheck = this.checked;
+                    rowCheckboxes.forEach(cb => {
+                        cb.checked = shouldCheck;
+                    });
+                    updateBulkActionUI();
+                });
+            }
+
+            // Individual checkboxes
+            rowCheckboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    updateBulkActionUI();
+                });
+            });
+
+            // Deselect All button
+            if (deselectAllBtn) {
+                deselectAllBtn.addEventListener('click', function() {
+                    rowCheckboxes.forEach(cb => {
+                        cb.checked = false;
+                    });
+                    if (selectAllCheckbox) {
+                        selectAllCheckbox.checked = false;
+                        selectAllCheckbox.indeterminate = false;
+                    }
+                    updateBulkActionUI();
+                });
+            }
+
+            // Open Modal
+            if (openBulkDeleteModalBtn) {
+                openBulkDeleteModalBtn.addEventListener('click', function() {
+                    const selected = getSelectedCheckboxes();
+                    if (selected.length === 0) return;
+
+                    modalSelectedCountText.textContent = `${selected.length} product${selected.length > 1 ? 's' : ''}`;
+                    
+                    // Build preview list and hidden form inputs
+                    modalSelectedListPreview.innerHTML = '';
+                    bulkDeleteHiddenInputs.innerHTML = '';
+
+                    selected.forEach((cb, index) => {
+                        const name = cb.dataset.name || `Product #${cb.value}`;
+                        const category = cb.dataset.category || '';
+                        
+                        const itemDiv = document.createElement('div');
+                        itemDiv.style.cssText = 'padding: 4px 0; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between;';
+                        itemDiv.innerHTML = `
+                            <span><strong>${index + 1}.</strong> ${escapeHtml(name)}</span>
+                            <span style="color: #64748b; font-size: 0.75rem;">${escapeHtml(category)}</span>
+                        `;
+                        modalSelectedListPreview.appendChild(itemDiv);
+
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = 'product_ids';
+                        hiddenInput.value = cb.value;
+                        bulkDeleteHiddenInputs.appendChild(hiddenInput);
+                    });
+
+                    bulkDeleteModal.style.display = 'flex';
+                });
+            }
+
+            // Close Modal
+            if (closeModalBtn) {
+                closeModalBtn.addEventListener('click', function() {
+                    bulkDeleteModal.style.display = 'none';
+                });
+            }
+
+            bulkDeleteModal.addEventListener('click', function(e) {
+                if (e.target === bulkDeleteModal) {
+                    bulkDeleteModal.style.display = 'none';
+                }
+            });
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+            }
+
+        })();
+    </script>
 </body>
 </html>

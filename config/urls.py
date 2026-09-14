@@ -7,9 +7,18 @@ from django.views.generic import TemplateView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.authtoken.views import obtain_auth_token
 
-# Import your custom views here
-from products.views import product_detail_view, product_list_view
+from products.views import product_compare_view, product_detail_view, product_list_view, wishlist_view, toggle_wishlist_view
 from cart.views import cart_detail_view
+from orders.views import verify_payment_api
+from electronics_shopping_website.users.manager_views import (
+    product_import,
+    product_sample_template,
+    product_bulk_delete,
+    category_import,
+    category_sample_template,
+    brand_import,
+    brand_sample_template,
+)
 
 
 urlpatterns = [
@@ -18,28 +27,51 @@ urlpatterns = [
     # ----------------------------------------------------------------------
     path("", product_list_view, name="home"),
     path("about/", TemplateView.as_view(template_name="pages/about.html"), name="about"),
-    path("products/<int:pk>/", product_detail_view, name="product_detail"),
+    path("products/compare/", product_compare_view, name="product_compare"),
     path("cart/", cart_detail_view, name="cart_detail"),
-    path("orders/", include("orders.urls")),
-   
+    path("wishlist/", wishlist_view, name="wishlist"),
     
     # ----------------------------------------------------------------------
-    # APP INCLUDES
+    # APP INCLUDES (MODULAR SUB-APP ROUTING WITH NAMESPACES)
     # ----------------------------------------------------------------------
-    path("categories/", include("category.urls")),
-    
-    # ----------------------------------------------------------------------
-    # USER MANAGEMENT & AUTHENTICATION
-    # ----------------------------------------------------------------------
+    path("orders/", include("orders.urls", namespace="orders")),
+    path("products/", include("products.urls", namespace="products")),
+    path("cart/", include("cart.urls", namespace="cart")),
+    path("categories/", include("category.urls", namespace="category")),
     path("users/", include("electronics_shopping_website.users.urls", namespace="users")),
     path("manager/", include("electronics_shopping_website.users.manager_urls", namespace="manager")),
+    path("chatbot/", include("chatbot.urls", namespace="chatbot")),
     path("accounts/", include("allauth.urls")),
+
+    # ----------------------------------------------------------------------
+    # PRODUCT DETAIL TOP-LEVEL ALIASES (supports lookup & reverse by slug/pk)
+    # ----------------------------------------------------------------------
+    path("products/<int:pk>/", product_detail_view, name="product_detail"),
+    path("products/<int:pk>/", product_detail_view, name="product_detail_pk"),
+    path("products/<slug:slug>/", product_detail_view, name="product_detail"),
+
+    # ----------------------------------------------------------------------
+    # TOP-LEVEL COMPATIBILITY ALIASES FOR MANAGER ACTIONS
+    # ----------------------------------------------------------------------
+    path("products/import/", product_import, name="product_import"),
+    path("products/sample-template/", product_sample_template, name="product_sample_template"),
+    path("products/bulk-delete/", product_bulk_delete, name="product_bulk_delete"),
+    path("categories/import/", category_import, name="category_import"),
+    path("categories/sample-template/", category_sample_template, name="category_sample_template"),
+    path("brands/import/", brand_import, name="brand_import"),
+    path("brands/sample-template/", brand_sample_template, name="brand_sample_template"),
+    
+    # ----------------------------------------------------------------------
+    # WISHLIST & PAYMENT APIS
+    # ----------------------------------------------------------------------
+    path("api/wishlist/toggle/<int:product_id>/", toggle_wishlist_view, name="api_toggle_wishlist"),
+    path("api/payments/verify/", verify_payment_api, name="api_verify_payment"),
+    path("api/orders/verify_payment/", verify_payment_api, name="api_orders_verify_payment"),
     
     # ----------------------------------------------------------------------
     # ADMIN & UTILITIES
     # ----------------------------------------------------------------------
     # Django Admin, use {% url 'admin:index' %}
-    path("dashboard/", include("dashboard.urls", namespace="dashboard")),
     path(settings.ADMIN_URL, admin.site.urls),
     
     # Admin Product Creation UI

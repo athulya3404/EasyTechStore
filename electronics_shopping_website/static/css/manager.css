@@ -1,26 +1,28 @@
 /* ==========================================================================
    EasyTech Store - Site Manager Dashboard
-   Professional Blue & White Design System
+   Unified EasyTech Design System (Homepage / Amazon Single Theme)
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-    /* Primary Professional Blue Palette */
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
-    --primary-dark: #1e40af;
-    --primary-light: #eff6ff;
-    --primary-border: #bfdbfe;
-    --primary-glow: rgba(37, 99, 235, 0.15);
+    /* Primary EasyTech Dark Theme Accent */
+    --primary: #16181D;
+    --primary-hover: #262a33;
+    --primary-dark: #0f1013;
+    --primary-light: #f1f5f9;
+    --primary-border: #cbd5e1;
+    --primary-glow: rgba(22, 24, 29, 0.12);
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
 
-    /* Sidebar - Professional Deep Navy / Slate */
-    --sidebar-bg: #0f172a;
-    --sidebar-surface: #1e293b;
-    --sidebar-border: #334155;
+    /* Sidebar - EasyTech Theme Dark Slate / Charcoal */
+    --sidebar-bg: #16181D;
+    --sidebar-surface: #20242c;
+    --sidebar-border: #292d37;
     --sidebar-text: #94a3b8;
     --sidebar-text-bright: #ffffff;
-    --sidebar-hover: rgba(255, 255, 255, 0.07);
+    --sidebar-hover: rgba(255, 255, 255, 0.08);
 
     /* Backgrounds & Surfaces */
     --bg-body: #f8fafc;
@@ -78,7 +80,7 @@
 html, body {
     height: 100%;
     background-color: var(--bg-body);
-    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: var(--text-main);
     font-size: 14px;
     line-height: 1.5;
@@ -88,6 +90,104 @@ html, body {
 a {
     color: inherit;
     text-decoration: none;
+}
+
+/* Standard Button System */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: var(--transition);
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.btn-sm {
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    border-radius: var(--radius-sm);
+}
+
+.btn-primary {
+    background: #16181D;
+    color: #ffffff !important;
+    border-color: #16181D;
+}
+.btn-primary:hover {
+    background: #2e323b;
+    border-color: #2e323b;
+    color: #ffffff !important;
+}
+
+.btn-secondary {
+    background: #ffffff;
+    color: #334155 !important;
+    border-color: #e2e8f0;
+}
+.btn-secondary:hover {
+    background: #f8fafc;
+    color: #0f172a !important;
+    border-color: #cbd5e1;
+}
+
+.btn-danger {
+    background: #dc2626;
+    color: #ffffff !important;
+    border-color: #dc2626;
+}
+.btn-danger:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+}
+
+.btn-success {
+    background: #10b981;
+    color: #ffffff !important;
+    border-color: #059669;
+}
+.btn-success:hover {
+    background: #059669;
+    border-color: #047857;
+    color: #ffffff !important;
+}
+
+.btn-outline-danger {
+    background: transparent;
+    color: #dc2626 !important;
+    border-color: #fca5a5;
+}
+.btn-outline-danger:hover {
+    background: #fef2f2;
+    border-color: #dc2626;
+}
+
+.btn-outline-success {
+    background: transparent;
+    color: #059669 !important;
+    border-color: #a7f3d0;
+}
+.btn-outline-success:hover {
+    background: #ecfdf5;
+    border-color: #059669;
+}
+
+.btn-outline-secondary {
+    background: transparent;
+    color: #475569 !important;
+    border-color: #e2e8f0;
+}
+.btn-outline-secondary:hover {
+    background: #f1f5f9;
+    color: #0f172a !important;
+    border-color: #cbd5e1;
 }
 
 /* ==========================================================================
@@ -221,9 +321,10 @@ a {
 }
 
 .sidebar-link.active {
-    background: var(--primary);
+    background: rgba(255, 255, 255, 0.12);
     color: #ffffff;
     font-weight: 600;
+    border-left: 3px solid #38bdf8;
 }
 
 .sidebar-link.active i {

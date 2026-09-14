@@ -37,3 +37,44 @@ class User(AbstractUser):
 
         """
         return reverse("users:detail", kwargs={"pk": self.id})
+
+
+from django.db import models
+
+
+class Address(models.Model):
+    ADDRESS_TYPE_CHOICES = [
+        ("Home", "Home (All day delivery)"),
+        ("Work", "Work (Delivery between 9 AM - 6 PM)"),
+        ("Other", "Other"),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="addresses",
+    )
+    full_name = models.CharField(max_length=150)
+    phone_number = models.CharField(max_length=20)
+    street_address = models.CharField(max_length=255)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    postal_code = models.CharField(max_length=20)
+    address_type = models.CharField(
+        max_length=20,
+        choices=ADDRESS_TYPE_CHOICES,
+        default="Home",
+    )
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-is_default", "-created_at"]
+        verbose_name_plural = "Addresses"
+
+    def __str__(self):
+        return f"{self.full_name} - {self.city}, {self.postal_code} ({self.address_type})"
+
+    def get_formatted_address(self):
+        return f"{self.full_name}, {self.street_address}, {self.city}, {self.state} - {self.postal_code} (Phone: {self.phone_number})"
+

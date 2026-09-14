@@ -1,12 +1,14 @@
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
+from electronics_shopping_website.users.manager_views import manager_required
 from .forms import CategoryForm
 from .models import Category
 
 
 def category_list(request):
-    categories = Category.objects.all()
+    categories = Category.objects.filter(is_active=True)
 
     return render(
         request,
@@ -17,6 +19,8 @@ def category_list(request):
     )
 
 
+@login_required
+@manager_required
 def category_create(request):
     """
     Create a new category.
@@ -48,6 +52,8 @@ def category_create(request):
     )
 
 
+@login_required
+@manager_required
 def category_update(request, pk):
     """
     Update an existing category.
@@ -90,6 +96,8 @@ def category_update(request, pk):
     )
 
 
+@login_required
+@manager_required
 def category_delete(request, pk):
     """
     Delete a category.
@@ -101,6 +109,13 @@ def category_delete(request, pk):
     )
 
     if request.method == "POST":
+        if category.products.exists():
+            messages.error(
+                request,
+                f"Cannot delete category '{category.name}' because it contains active products.",
+            )
+            return redirect("category:list")
+
         category.delete()
 
         messages.success(
@@ -115,5 +130,25 @@ def category_delete(request, pk):
         "category/category_confirm_delete.html",
         {
             "category": category,
+        },
+    )
+
+
+def category_detail(request, slug=None, pk=None):
+    """
+    Renders dedicated category storefront with products filtered by this category.
+    """
+    if slug:
+        category = get_object_or_404(Category, slug=slug)
+    else:
+        category = get_object_or_404(Category, pk=pk)
+
+    products = category.products.filter(is_active=True).select_related("brand")
+    return render(
+        request,
+        "category/category_detail.html",
+        {
+            "category": category,
+            "products": products,
         },
     )

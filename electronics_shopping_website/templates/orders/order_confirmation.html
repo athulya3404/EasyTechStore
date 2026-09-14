@@ -1,0 +1,337 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Order Confirmation #{{ order.id }} - EasyTech{% endblock title %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-header bg-success text-white py-4 px-4 text-center">
+          <div class="mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+            </svg>
+          </div>
+          <h2 class="fw-bold mb-1">{% if order.status == 'Pending' %}Order Placed - Payment Pending{% else %}Thank You For Your Order!{% endif %}</h2>
+          <p class="mb-0 opacity-75">{% if order.status == 'Pending' %}Order #{{ order.id }} is awaiting payment via Payment Gateway.{% else %}Order #{{ order.id }} has been processed successfully.{% endif %}</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+          {% if order.status == 'Pending' %}
+          <div class="alert alert-warning d-flex align-items-center justify-content-between rounded-3 mb-4 shadow-sm" role="alert">
+            <div>
+              <strong>Payment Pending:</strong> Please complete your payment via the Payment Gateway (UPI, Card, etc.) to confirm this order.
+            </div>
+            <a href="{% url 'orders:payment_gateway' order.id %}" class="btn btn-warning btn-sm fw-bold text-nowrap ms-3">
+              Open Payment Gateway →
+            </a>
+          </div>
+          {% endif %}
+          <!-- ============================================================ -->
+          <!-- AMAZON & FLIPKART STYLE ORDER TRACKING HERO COMPONENT -->
+          <!-- ============================================================ -->
+          {% if order.status == 'Cancelled' %}
+            <div class="alert alert-danger d-flex align-items-center rounded-4 p-4 mb-4" role="alert">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-x-circle-fill me-3 flex-shrink-0" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+              </svg>
+              <div>
+                <h5 class="fw-bold mb-1">Order Cancelled</h5>
+                <p class="mb-0 small text-muted">This order was cancelled and inventory has been restored. Please contact support if you need assistance.</p>
+              </div>
+            </div>
+          {% else %}
+            <!-- Hero Delivery Headline Card -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 text-white"
+              {% if order.status == 'Delivered' %}style="background: linear-gradient(135deg, #15803d, #16a34a);"{% elif order.status == 'Shipped' %}style="background: linear-gradient(135deg, #1e3a8a, #2563eb);"{% else %}style="background: linear-gradient(135deg, #0f172a, #1e293b);"{% endif %}>
+              
+              <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div>
+                  <span class="badge bg-white bg-opacity-25 text-white px-3 py-1 rounded-pill mb-2 fw-semibold text-uppercase small" style="letter-spacing: 0.5px;">
+                    <i class="bi bi-truck me-1"></i> Live Delivery Tracking
+                  </span>
+                  <h2 class="h3 fw-bold mb-1 text-white">
+                    {{ order.delivery_status_display }}
+                  </h2>
+                  <p class="mb-0 text-white text-opacity-75 small">
+                    {% if order.status == 'Shipped' %}
+                      Package is in transit with {{ order.carrier_name }} and on track for delivery.
+                    {% elif order.status == 'Delivered' %}
+                      Package was delivered successfully. Enjoy your new gadgets!
+                    {% elif order.status == 'Paid' %}
+                      Payment verified. Your gadgets are being carefully packed at our fulfillment warehouse.
+                    {% else %}
+                      Awaiting payment confirmation before warehouse dispatch.
+                    {% endif %}
+                  </p>
+                </div>
+
+                <!-- Carrier & Tracking ID Badge with 1-Click Copy -->
+                <div class="bg-white bg-opacity-10 border border-white border-opacity-25 rounded-4 p-3 text-md-end">
+                  <small class="d-block text-white text-opacity-75 text-uppercase fw-semibold" style="font-size: 0.72rem;">Logistics Partner</small>
+                  <div class="fw-bold text-white fs-6">{{ order.carrier_name }}</div>
+                  {% if order.tracking_number %}
+                    <div class="d-flex align-items-center gap-1.5 justify-content-md-end mt-1">
+                      <code class="text-white bg-dark bg-opacity-50 px-2 py-0.5 rounded font-monospace small">#{{ order.tracking_number }}</code>
+                      <button type="button" class="btn btn-xs btn-light text-dark fw-bold py-0 px-2 ms-1" style="font-size: 0.72rem; border-radius: 4px;"
+                              onclick="navigator.clipboard.writeText('{{ order.tracking_number }}'); this.innerText='✓ Copied!'; setTimeout(() => this.innerText='Copy', 2000);">
+                        Copy
+                      </button>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- 4-Stage Amazon / Flipkart Visual Milestone Pipeline -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-4 bg-white">
+              <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                <h5 class="fw-bold text-dark mb-0">
+                  <i class="bi bi-geo-alt-fill text-primary me-2"></i>Shipment Milestones
+                </h5>
+                <span class="badge rounded-pill px-3 py-1.5 fw-bold 
+                  {% if order.status == 'Paid' %}bg-success-subtle text-success border border-success-subtle
+                  {% elif order.status == 'Shipped' %}bg-info-subtle text-info-emphasis border border-info-subtle
+                  {% elif order.status == 'Delivered' %}bg-success text-white
+                  {% else %}bg-warning-subtle text-warning-emphasis border border-warning-subtle{% endif %}">
+                  Stage: {{ order.status }}
+                </span>
+              </div>
+
+              <!-- Milestone Nodes Stepper -->
+              <div class="position-relative my-4 mx-2 mx-md-4">
+                <div class="progress" style="height: 5px; background-color: #e2e8f0;">
+                  <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" 
+                       {% if order.status == 'Delivered' %}style="width: 100%;" aria-valuenow="100"{% elif order.status == 'Shipped' %}style="width: 66.6%;" aria-valuenow="66"{% elif order.status == 'Paid' %}style="width: 33.3%;" aria-valuenow="33"{% else %}style="width: 0%;" aria-valuenow="0"{% endif %} 
+                       aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+
+                <!-- 1. Order Placed -->
+                <div class="position-absolute top-0 start-0 translate-middle text-center" style="width: 120px;">
+                  <div class="btn btn-sm btn-success rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center fw-bold" style="width: 2.2rem; height: 2.2rem; pointer-events: none;">
+                    ✓
+                  </div>
+                  <div class="fw-bold text-dark small mt-2">Ordered</div>
+                  <div class="text-muted" style="font-size: 0.72rem;">{{ order.created_at|date:"M d, g:i A" }}</div>
+                </div>
+
+                <!-- 2. Payment Confirmed / Preparing -->
+                <div class="position-absolute top-0 translate-middle text-center" style="left: 33.3%; width: 130px;">
+                  <div class="btn btn-sm {% if order.status == 'Paid' or order.status == 'Shipped' or order.status == 'Delivered' %}btn-success{% else %}btn-secondary{% endif %} rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center fw-bold" style="width: 2.2rem; height: 2.2rem; pointer-events: none;">
+                    {% if order.status == 'Paid' or order.status == 'Shipped' or order.status == 'Delivered' %}✓{% else %}2{% endif %}
+                  </div>
+                  <div class="fw-bold {% if order.status == 'Paid' or order.status == 'Shipped' or order.status == 'Delivered' %}text-dark{% else %}text-muted{% endif %} small mt-2">Confirmed</div>
+                  <div class="text-muted" style="font-size: 0.72rem;">
+                    {% if order.status == 'Paid' or order.status == 'Shipped' or order.status == 'Delivered' %}Paid & Verified{% else %}Pending{% endif %}
+                  </div>
+                </div>
+
+                <!-- 3. Shipped / In Transit -->
+                <div class="position-absolute top-0 translate-middle text-center" style="left: 66.6%; width: 130px;">
+                  <div class="btn btn-sm {% if order.status == 'Shipped' or order.status == 'Delivered' %}btn-success{% else %}btn-secondary{% endif %} rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center fw-bold" style="width: 2.2rem; height: 2.2rem; pointer-events: none;">
+                    {% if order.status == 'Shipped' or order.status == 'Delivered' %}<i class="bi bi-truck"></i>{% else %}3{% endif %}
+                  </div>
+                  <div class="fw-bold {% if order.status == 'Shipped' or order.status == 'Delivered' %}text-dark{% else %}text-muted{% endif %} small mt-2">Shipped</div>
+                  <div class="text-muted" style="font-size: 0.72rem;">
+                    {% if order.shipped_at %}{{ order.shipped_at|date:"M d, g:i A" }}{% elif order.status == 'Shipped' or order.status == 'Delivered' %}In Transit{% else %}Awaiting Dispatch{% endif %}
+                  </div>
+                </div>
+
+                <!-- 4. Delivered -->
+                <div class="position-absolute top-0 start-100 translate-middle text-center" style="width: 120px;">
+                  <div class="btn btn-sm {% if order.status == 'Delivered' %}btn-success{% else %}btn-secondary{% endif %} rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center fw-bold" style="width: 2.2rem; height: 2.2rem; pointer-events: none;">
+                    {% if order.status == 'Delivered' %}✓{% else %}4{% endif %}
+                  </div>
+                  <div class="fw-bold {% if order.status == 'Delivered' %}text-dark{% else %}text-muted{% endif %} small mt-2">Delivered</div>
+                  <div class="text-muted" style="font-size: 0.72rem;">
+                    {% if order.delivered_at %}{{ order.delivered_at|date:"M d, g:i A" }}{% elif order.estimated_delivery_date %}{{ order.estimated_delivery_date|date:"M d" }}{% else %}Est. 3-5 Days{% endif %}
+                  </div>
+                </div>
+              </div>
+              <div style="height: 38px;"></div>
+            </div>
+
+            <!-- Viva Demo 1-Click Status Advance Banner -->
+            {% if request.user.is_staff or request.user.is_superuser %}
+            <div class="my-3 p-3 bg-light rounded-4 d-flex align-items-center justify-content-between border shadow-sm flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-warning text-dark fw-bold px-2.5 py-1.5"><i class="bi bi-lightning-charge-fill me-1"></i> Viva Presentation Quick Action:</span>
+                <small class="text-muted fw-semibold">Cycle status in real time to showcase tracking transitions:</small>
+              </div>
+              <a href="{% url 'orders:advance_status' order.id %}?next={{ request.path }}" class="btn btn-warning btn-sm fw-bold shadow-sm rounded-pill px-3">
+                ⚡ Advance Order Status ({% if order.status == 'Pending' %}Mark Paid{% elif order.status == 'Paid' %}Ship Package{% elif order.status == 'Shipped' %}Deliver to Customer{% else %}Reset to Pending{% endif %})
+              </a>
+            </div>
+            {% endif %}
+          {% endif %}
+          </div>
+
+          <!-- Order Summary Details -->
+          <div class="row g-4 mb-4 pb-4 border-bottom">
+            <div class="col-sm-6 col-md-3">
+              <span class="text-muted text-uppercase fw-semibold d-block small">Order ID</span>
+              <strong class="fs-6">#{{ order.id }}</strong>
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <span class="text-muted text-uppercase fw-semibold d-block small">Status</span>
+              <span class="badge bg-success rounded-pill px-2.5 py-1">{{ order.status }}</span>
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <span class="text-muted text-uppercase fw-semibold d-block small">Payment Method</span>
+              <strong class="fs-6">{% if order.payment.payment_method == "Sandbox" %}Payment Gateway (UPI, Card, etc.){% else %}{{ order.payment.payment_method|default:"Payment Gateway (UPI, Card, etc.)" }}{% endif %}</strong>
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <span class="text-muted text-uppercase fw-semibold d-block small">Date</span>
+              <strong class="fs-6">{{ order.created_at|date:"M d, Y" }}</strong>
+            </div>
+          </div>
+
+          <!-- Transaction ID Box -->
+          {% if order.payment %}
+          <div class="alert alert-light border rounded-3 p-3 mb-4 d-flex justify-content-between align-items-center">
+            <div>
+              <small class="text-muted d-block">Transaction Reference</small>
+              <code class="fw-bold text-dark">{{ order.payment.transaction_id }}</code>
+            </div>
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Verified</span>
+          </div>
+          {% endif %}
+
+          <!-- Invoice Email Sent Status Card -->
+          <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-success-subtle border-start border-4 border-success">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-3">
+                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; flex-shrink: 0;">
+                  <i class="fas fa-envelope-circle-check"></i>
+                </div>
+                <div>
+                  <h6 class="fw-bold mb-0 text-dark">
+                    {% if order.invoice_sent_at %}
+                      Official Tax Invoice Emailed
+                    {% else %}
+                      Official Tax Invoice Ready
+                    {% endif %}
+                  </h6>
+                  <small class="text-muted">
+                    {% if order.invoice_sent_at %}
+                      Dispatched to <strong>{{ order.user.email }}</strong> on {{ order.invoice_sent_at|date:"M d, Y \a\t h:i A" }}
+                    {% else %}
+                      Ready for instant delivery to <strong>{{ order.user.email }}</strong>
+                    {% endif %}
+                  </small>
+                </div>
+              </div>
+              <div class="d-flex gap-2">
+                <a href="{% url 'orders:resend_invoice' order.id %}" class="btn btn-outline-success btn-sm fw-bold">
+                  <i class="fas fa-paper-plane me-1"></i> {% if order.invoice_sent_at %}Resend Invoice{% else %}Email Invoice{% endif %}
+                </a>
+                <a href="{% url 'orders:download_invoice' order.id %}?format=pdf" target="_blank" class="btn btn-success btn-sm fw-bold">
+                  <i class="fas fa-file-pdf me-1"></i> View PDF
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Shipping Address -->
+          <div class="mb-4 pb-4 border-bottom">
+            <h5 class="fw-bold mb-2">Shipping Information</h5>
+            <div class="bg-light p-3 rounded-3 text-muted">
+              {% if order.recipient_name %}
+                <strong class="text-dark d-block mb-1">{{ order.recipient_name }}</strong>
+              {% endif %}
+              {% if order.street_address and order.city %}
+                <span class="d-block">{{ order.street_address }}</span>
+                <span class="d-block">{{ order.city }}, {{ order.state }} - {{ order.postal_code }}</span>
+              {% else %}
+                <span class="d-block">{{ order.shipping_address }}</span>
+              {% endif %}
+              {% if order.recipient_phone %}
+                <small class="text-muted d-block mt-1">Contact: {{ order.recipient_phone }}</small>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Items Ordered -->
+          <div class="mb-4">
+            <h5 class="fw-bold mb-3">Purchased Items</h5>
+            <div class="table-responsive">
+              <table class="table table-borderless align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th scope="col">Product</th>
+                    <th scope="col" class="text-center">Quantity</th>
+                    <th scope="col" class="text-end">Price</th>
+                    <th scope="col" class="text-end">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in order.items.all %}
+                  <tr class="border-bottom border-light">
+                    <td>
+                      <h6 class="mb-0 fw-bold">{{ item.product.name }}</h6>
+                      <small class="text-muted">{{ item.product.category.name }}</small>
+                    </td>
+                    <td class="text-center">{{ item.quantity }}</td>
+                    <td class="text-end">₹{{ item.price_at_purchase|floatformat:2 }}</td>
+                    <td class="text-end fw-bold">₹{{ item.get_subtotal|floatformat:2 }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="3" class="text-end fw-bold pt-3 fs-5">Total Paid:</td>
+                    <td class="text-end fw-bold text-success pt-3 fs-5">₹{{ order.total_amount|floatformat:2 }}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          <!-- Post-Purchase Review Prompt Card -->
+          <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light border-start border-4 border-warning">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+              <div>
+                <h6 class="fw-bold mb-1 text-dark">
+                  <i class="fas fa-star text-warning me-1"></i> Tested Your New Gadget? Leave a Verified Review!
+                </h6>
+                <p class="text-muted small mb-0">
+                  Help fellow tech enthusiasts make confident buying decisions. As a verified purchaser, your feedback will be highlighted with an official green <strong>✓ Verified Buyer</strong> badge.
+                </p>
+              </div>
+              {% with first_item=order.items.first %}
+                {% if first_item and first_item.product and first_item.product.slug %}
+                  <a href="{% url 'products:detail' first_item.product.slug %}#write-review" class="btn btn-warning btn-sm fw-bold text-dark px-3 py-2 shadow-sm text-nowrap">
+                    <i class="fas fa-pen-to-square me-1"></i> Write Review Now
+                  </a>
+                {% elif first_item and first_item.product and first_item.product.pk %}
+                  <a href="{% url 'products:detail_by_pk' first_item.product.pk %}#write-review" class="btn btn-warning btn-sm fw-bold text-dark px-3 py-2 shadow-sm text-nowrap">
+                    <i class="fas fa-pen-to-square me-1"></i> Write Review Now
+                  </a>
+                {% endif %}
+              {% endwith %}
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="d-flex flex-wrap gap-3 justify-content-center pt-3">
+            <a href="{% url 'orders:download_invoice' order.id %}?format=pdf" class="btn btn-outline-primary px-4 fw-bold shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-pdf me-1" viewBox="0 0 16 16">
+                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+              </svg>
+              Download Tax Invoice (PDF)
+            </a>
+            <a href="{% url 'orders:my_orders' %}" class="btn btn-primary px-4 fw-semibold shadow-sm">
+              View All My Orders
+            </a>
+            <a href="{% url 'home' %}" class="btn btn-outline-secondary px-4 fw-semibold">
+              Return to Store
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

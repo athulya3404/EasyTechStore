@@ -182,7 +182,7 @@
                                 <a href="{% url 'manager:product_edit' product.id %}" class="btn btn-primary" style="width: 100%;">
                                     <i class="fas fa-pen-to-square"></i> Edit Product
                                 </a>
-                                <a href="{% url 'product_detail' product.id %}" target="_blank" class="btn btn-secondary" style="width: 100%;">
+                                <a href="{% url 'product_detail' product.slug|default:product.id %}" target="_blank" class="btn btn-secondary" style="width: 100%;">
                                     <i class="fas fa-external-link-alt"></i> View on Storefront
                                 </a>
                                 <a href="{% url 'manager:product_delete' product.id %}" class="btn btn-danger" style="width: 100%;">

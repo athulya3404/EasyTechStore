@@ -120,14 +120,14 @@
                             <!-- 5. Specifications -->
                             <div class="form-group">
                                 <label class="form-label" for="productSpecifications">Specifications</label>
-                                <textarea id="productSpecifications" name="specifications" class="form-control" rows="4">{{ product.specifications }}</textarea>
-                                <div class="form-hint">Technical hardware specifications (RAM, CPU, Display, Camera, etc.)</div>
+                                <textarea id="productSpecifications" name="specifications" class="form-control" rows="4">{{ specs_display|default:product.specifications }}</textarea>
+                                <div class="form-hint">Technical specifications (Key: Value pairs or JSON, e.g. RAM: 16GB, Processor: Apple M3)</div>
                             </div>
 
                             <!-- 6. Image & Preview -->
                             <div class="form-grid-2">
                                 <div class="form-group">
-                                    <label class="form-label" for="productImageInput">Update Product Image</label>
+                                    <label class="form-label" for="productImageInput">Update Primary Image</label>
                                     <input type="file" id="productImageInput" name="image" class="form-control" accept="image/*">
                                     <div class="form-hint">Leave blank to keep existing image.</div>
                                 </div>
@@ -141,6 +141,22 @@
                                         {% endif %}
                                     </div>
                                 </div>
+                            </div>
+
+                            <!-- Additional Gallery Images -->
+                            <div class="form-group" style="margin-top: 15px;">
+                                <label class="form-label" for="galleryImagesInput">Upload Additional Gallery Perspectives</label>
+                                <input type="file" id="galleryImagesInput" name="gallery_images" class="form-control" accept="image/*" multiple>
+                                <div class="form-hint">Select multiple gadget photos (ports, side, back view) to upload to product gallery.</div>
+                                {% if gallery_images %}
+                                <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                                    {% for gimg in gallery_images %}
+                                    <div style="width: 70px; height: 70px; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden;" title="{{ gimg.alt_text }}">
+                                        <img src="{{ gimg.image.url }}" alt="{{ gimg.alt_text }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
                             </div>
 
                             <!-- 7. Availability Toggle -->

@@ -5,69 +5,97 @@
 
 {% block content %}
 <div class="container py-5">
-  <h1 class="display-5 fw-bold mb-5 text-dark">Shopping Cart</h1>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="display-5 fw-bold mb-1 text-dark">Shopping Cart</h1>
+      <p class="text-muted">Select the items you wish to purchase now, or keep them for later.</p>
+    </div>
+    <a href="{% url 'home' %}" class="btn btn-outline-primary fw-semibold">&larr; Continue Shopping</a>
+  </div>
 
   {% if cart.items.all %}
     <div class="row g-5">
 
       <!-- Cart Items Table -->
       <div class="col-lg-8">
-        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-3">
           <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
               <thead class="table-light">
                 <tr>
-                  <th scope="col" class="py-3 ps-4">Product</th>
-                  <th scope="col" class="py-3">Price</th>
-                  <th scope="col" class="py-3">Quantity</th>
-                  <th scope="col" class="py-3">Subtotal</th>
-                  <th scope="col" class="py-3 text-center">Action</th>
+                  <!-- Select All Checkbox -->
+                  <th scope="col" class="py-3 ps-3" style="width: 5%;">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="selectAllCartItems" checked title="Select All Items">
+                    </div>
+                  </th>
+                  <th scope="col" class="py-3" style="width: 45%;">Product</th>
+                  <th scope="col" class="py-3" style="width: 18%;">Price</th>
+                  <th scope="col" class="py-3" style="width: 14%;">Quantity</th>
+                  <th scope="col" class="py-3" style="width: 10%;">Subtotal</th>
+                  <th scope="col" class="py-3 text-center" style="width: 8%;">Action</th>
                 </tr>
               </thead>
 
               <tbody>
                 {% for item in cart.items.all %}
-                  <tr>
-
-                    <!-- Product -->
-                    <td class="ps-4 py-3">
-                      <div class="d-flex align-items-center">
-
-                        <img
-                          src="{% if item.product.image %}{{ item.product.image.url }}{% else %}{% static 'images/placeholder.png' %}{% endif %}"
-                          alt="{{ item.product.name }}"
-                          class="img-fluid rounded"
-                          style="width: 60px; height: 60px; object-fit: contain; background: #f8f9fa;"
+                  <tr id="cart-row-{{ item.id }}">
+                    <!-- Checkbox to select item -->
+                    <td class="ps-3 py-3">
+                      <div class="form-check">
+                        <input 
+                          class="form-check-input cart-item-checkbox" 
+                          type="checkbox" 
+                          data-item-id="{{ item.id }}" 
+                          data-subtotal="{{ item.get_subtotal }}"
+                          checked
+                          title="Select item for checkout"
                         >
-
-                        <div class="ms-3">
-                          <h6 class="mb-0 fw-bold">
-                            {{ item.product.name }}
-                          </h6>
-
-                          <small class="text-muted">
-                            {{ item.product.category.name }}
-                          </small>
-                        </div>
-
                       </div>
                     </td>
 
-                    <!-- Price -->
-                    <td class="py-3 text-muted">
-                      ${{ item.product.price }}
+                    <!-- Product Info -->
+                    <td class="py-3">
+                      <div class="d-flex align-items-center">
+                        <img
+                          src="{% if item.product.image %}{{ item.product.image.url }}{% else %}{% static 'images/placeholder.png' %}{% endif %}"
+                          alt="{{ item.product.name }}"
+                          class="img-fluid rounded-3 border"
+                          style="width: 60px; height: 60px; object-fit: contain; background: #f8f9fa; padding: 4px;"
+                        >
+                        <div class="ms-3">
+                          <a href="{% url 'product_detail' item.product.slug|default:item.product.pk %}" class="text-decoration-none text-dark">
+                            <h6 class="mb-1 fw-bold text-truncate" style="max-width: 240px;" title="{{ item.product.name }}">
+                              {{ item.product.name }}
+                            </h6>
+                          </a>
+                          <span class="badge bg-secondary-subtle text-secondary small">
+                            {{ item.product.category.name }}
+                          </span>
+                        </div>
+                      </div>
                     </td>
 
-                    <!-- Quantity -->
+                    <!-- Unit Price -->
+                    <td class="py-3">
+                      {% if item.product.discount > 0 %}
+                        <span class="fw-bold text-dark">₹{{ item.product.get_discounted_price|floatformat:2 }}</span>
+                        <div class="text-muted text-decoration-line-through small">₹{{ item.product.price|floatformat:2 }}</div>
+                      {% else %}
+                        <span class="fw-bold text-dark">₹{{ item.product.price|floatformat:2 }}</span>
+                      {% endif %}
+                    </td>
+
+                    <!-- Quantity Adjuster -->
                     <td class="py-3">
                       <div class="input-group input-group-sm" style="width: 100px;">
-
                         <!-- Decrease -->
                         <button
                           class="btn btn-outline-secondary update-cart-btn"
                           type="button"
                           data-item-id="{{ item.id }}"
                           data-new-quantity="{{ item.quantity|add:'-1' }}"
+                          title="Decrease Quantity"
                         >
                           -
                         </button>
@@ -86,86 +114,95 @@
                           type="button"
                           data-item-id="{{ item.id }}"
                           data-new-quantity="{{ item.quantity|add:'1' }}"
+                          {% if item.quantity >= item.product.stock %}disabled title="Maximum stock reached"{% else %}title="Increase Quantity"{% endif %}
                         >
                           +
                         </button>
-
                       </div>
                     </td>
 
                     <!-- Subtotal -->
                     <td class="py-3 fw-bold text-dark">
-                      ${{ item.get_subtotal }}
+                      ₹{{ item.get_subtotal|floatformat:2 }}
                     </td>
 
-                    <!-- Remove -->
+                    <!-- Remove Action -->
                     <td class="py-3 text-center">
                       <button
                         type="button"
                         data-item-id="{{ item.id }}"
-                        class="btn btn-sm btn-outline-danger shadow-sm remove-cart-btn"
+                        class="btn btn-sm btn-outline-danger shadow-sm remove-cart-btn rounded-3"
+                        title="Remove product"
                       >
-                        Remove
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                          <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                          <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                        </svg>
                       </button>
                     </td>
-
                   </tr>
                 {% endfor %}
               </tbody>
-
             </table>
           </div>
         </div>
+        <small class="text-muted">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-info-circle me-1" viewBox="0 0 16 16">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+            <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+          </svg>
+          Unselected items will remain saved in your cart for later purchase.
+        </small>
       </div>
 
-      <!-- Order Summary -->
+      <!-- Order Summary Column -->
       <div class="col-lg-4">
-        <div class="card border-0 shadow-sm rounded-4 bg-light p-4">
+        <div class="card border-0 shadow-sm rounded-4 bg-light p-4 sticky-top" style="top: 20px;">
+          <h4 class="fw-bold mb-4">Order Summary</h4>
 
-          <h4 class="fw-bold mb-4">
-            Order Summary
-          </h4>
-
-          <!-- Subtotal -->
           <div class="d-flex justify-content-between mb-3 text-muted">
-            <span>Subtotal</span>
-            <span>${{ cart.get_total_price }}</span>
+            <span>Selected Items</span>
+            <span class="fw-bold text-dark" id="selectedItemCount">{{ cart.items.count }}</span>
           </div>
 
-          <!-- Tax -->
           <div class="d-flex justify-content-between mb-3 text-muted">
-            <span>Estimated Tax</span>
-            <span>$0.00</span>
+            <span>Subtotal</span>
+            <span id="cartSubtotal">₹{{ cart.get_total_price|floatformat:2 }}</span>
+          </div>
+
+          <div class="d-flex justify-content-between mb-3 text-muted">
+            <span>Estimated GST / Tax</span>
+            <span class="text-success fw-semibold">Included</span>
+          </div>
+
+          <div class="d-flex justify-content-between mb-3 text-muted">
+            <span>Shipping</span>
+            <span class="text-success fw-bold">FREE</span>
           </div>
 
           <hr class="my-4">
 
-          <!-- Total -->
           <div class="d-flex justify-content-between mb-4">
-            <span class="fs-5 fw-bold text-dark">
-              Total
-            </span>
-
-            <span class="fs-5 fw-bold text-success">
-              ${{ cart.get_total_price }}
-            </span>
+            <span class="fs-5 fw-bold text-dark">Total Amount</span>
+            <span class="fs-5 fw-bold text-success" id="cartTotal">₹{{ cart.get_total_price|floatformat:2 }}</span>
           </div>
 
           <!-- Checkout Button -->
           <a
+            id="proceedToCheckoutBtn"
             href="{% url 'orders:checkout' %}"
-            class="btn btn-primary btn-lg w-100 fw-bold shadow-sm d-block text-center text-decoration-none"
+            class="btn btn-primary btn-lg w-100 fw-bold shadow-sm d-block text-center text-decoration-none py-3"
           >
-            Proceed to Checkout
+            Proceed to Checkout &rarr;
           </a>
 
-          <!-- Continue Shopping -->
+          <div id="noSelectionAlert" class="alert alert-warning small mt-3 mb-0 d-none text-center">
+            Please select at least 1 item to proceed to checkout.
+          </div>
+
           <div class="mt-3 text-center">
-            <a
-              href="{% url 'home' %}"
-              class="text-decoration-none text-muted small"
-            >
-              Continue Shopping
+            <a href="{% url 'home' %}" class="text-decoration-none text-muted small">
+              &larr; Continue Shopping
             </a>
           </div>
 
@@ -175,23 +212,90 @@
     </div>
 
   {% else %}
-
-    <!-- Empty Cart -->
+    <!-- Empty Cart State -->
     <div class="text-center py-5">
-
-      <h3 class="text-muted mb-4">
-        Your cart is currently empty.
-      </h3>
-
-      <a
-        href="{% url 'home' %}"
-        class="btn btn-primary btn-lg px-5 fw-bold shadow-sm"
-      >
-        Browse Products
+      <div class="mb-3 text-muted">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-cart-x" viewBox="0 0 16 16">
+          <path d="M7.354 5.646a.5.5 0 1 0-.708.708L7.793 7.5 6.646 8.646a.5.5 0 1 0 .708.708L8.5 8.207l1.146 1.147a.5.5 0 0 0 .708-.708L9.207 7.5l1.147-1.146a.5.5 0 0 0-.708-.708L8.5 6.793 7.354 5.646z"/>
+          <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1H.5zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM9 5.5V7h1.5a.5.5 0 0 1 0 1H9v1.5a.5.5 0 0 1-1 0V8H6.5a.5.5 0 0 1 0-1H8V5.5a.5.5 0 0 1 1 0z"/>
+        </svg>
+      </div>
+      <h3 class="fw-bold mb-2">Your shopping cart is empty</h3>
+      <p class="text-muted mb-4">Explore our laptops, smartphones, and accessories to add items to your cart.</p>
+      <a href="{% url 'home' %}" class="btn btn-primary btn-lg px-5 fw-bold shadow-sm">
+        Browse Electronics
       </a>
+    </div>
+  {% endif %}
 
+  <!-- ============================================================ -->
+  <!-- RECOMMENDED FOR YOU (MATCHING USER PREFERENCES) -->
+  <!-- ============================================================ -->
+  {% if recommended_products %}
+  <div class="mt-5 pt-4 border-top">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+      <div>
+        <h4 class="fw-bold mb-1 d-flex align-items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-stars text-primary" viewBox="0 0 16 16">
+            <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828l.645-1.937zM3.794.115a.2.2 0 0 1 .38 0l.371 1.115a1.7 1.7 0 0 0 1.077 1.077l1.116.372a.2.2 0 0 1 0 .38l-1.116.371a1.7 1.7 0 0 0-1.077 1.077l-.371 1.116a.2.2 0 0 1-.38 0l-.371-1.116a1.7 1.7 0 0 0-1.078-1.077L1.252 2.062a.2.2 0 0 1 0-.38l1.116-.372a1.7 1.7 0 0 0 1.078-1.077L3.794.115z"/>
+          </svg>
+          Recommended For You
+        </h4>
+        <p class="text-muted small mb-0">Curated to match your preferences and tech interests. Additional items are added to your cart only when you explicitly choose them.</p>
+      </div>
+      <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 small">
+        Matches Your Preferences
+      </span>
     </div>
 
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+      {% for rec in recommended_products %}
+        <div class="col">
+          <div class="card h-100 border-0 shadow-sm rounded-4 hover-shadow transition bg-white">
+            <div class="p-3 text-center bg-light rounded-top-4 position-relative" style="height: 180px;">
+              <img src="{% if rec.image %}{{ rec.image.url }}{% else %}{% static 'images/placeholder.png' %}{% endif %}" 
+                   class="img-fluid h-100 object-fit-contain" 
+                   alt="{{ rec.name }}">
+              {% if rec.discount > 0 %}
+                <span class="badge bg-danger position-absolute top-0 start-0 m-2 shadow-sm">-{{ rec.discount|floatformat:0 }}%</span>
+              {% endif %}
+            </div>
+            <div class="card-body d-flex flex-column p-3">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">{{ rec.brand.name }}</small>
+                <span class="badge bg-light text-secondary border small" style="font-size: 0.7rem;">{{ rec.category.name }}</span>
+              </div>
+              <a href="{% url 'product_detail' rec.slug|default:rec.id %}" class="text-decoration-none text-dark mb-2">
+                <h6 class="fw-bold text-truncate mb-0" title="{{ rec.name }}">{{ rec.name }}</h6>
+              </a>
+              <div class="d-flex align-items-center gap-1 mb-2">
+                <span class="text-warning small">★ {{ rec.average_rating }}</span>
+                <span class="text-muted small">({{ rec.review_count }})</span>
+              </div>
+              <div class="mt-auto pt-2 d-flex justify-content-between align-items-center border-top">
+                <div>
+                  {% if rec.discount > 0 %}
+                    <span class="fs-5 fw-bold text-dark">₹{{ rec.get_discounted_price|floatformat:2 }}</span>
+                    <small class="text-muted text-decoration-line-through d-block" style="font-size: 0.75rem;">₹{{ rec.price|floatformat:2 }}</small>
+                  {% else %}
+                    <span class="fs-5 fw-bold text-dark">₹{{ rec.price|floatformat:2 }}</span>
+                  {% endif %}
+                </div>
+                <button 
+                  class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold add-to-cart-btn" 
+                  data-product-id="{{ rec.id }}"
+                  title="Explicitly add to your cart"
+                >
+                  + Add to Cart
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
   {% endif %}
+
 </div>
 {% endblock content %}

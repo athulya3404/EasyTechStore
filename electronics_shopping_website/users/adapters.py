@@ -25,6 +25,12 @@ class AccountAdapter(DefaultAccountAdapter):
             return reverse("manager:home")
         return super().get_login_redirect_url(request)
 
+    def get_email_confirmation_url(self, request: HttpRequest | None, emailconfirmation) -> str:
+        url = reverse("account_confirm_email", args=[emailconfirmation.key])
+        if request is not None:
+            return request.build_absolute_uri(url)
+        return f"http://127.0.0.1:8000{url}"
+
 
 
 

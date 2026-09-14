@@ -228,6 +228,36 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- PDF Tax Invoice Email Dispatch Card -->
+                        <div class="manager-card" style="margin-top: 24px;">
+                            <div class="card-top">
+                                <div class="card-top-title">
+                                    <i class="fas fa-file-invoice"></i> PDF Tax Invoice Email
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem;">
+                                        <span style="color: var(--text-muted);">Dispatch Status:</span>
+                                        {% if order.invoice_sent_at %}
+                                            <span style="font-weight: 700; color: #16a34a;">
+                                                <i class="fas fa-check-circle me-1"></i> Sent {{ order.invoice_sent_at|date:"M d, Y \a\t h:i A" }}
+                                            </span>
+                                        {% else %}
+                                            <span style="font-weight: 700; color: #d97706;">
+                                                <i class="fas fa-clock me-1"></i> Pending / Not Dispatched
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    <a href="{% url 'orders:resend_invoice' order.id %}?next={{ request.get_full_path|urlencode }}" 
+                                       class="btn btn-secondary" 
+                                       style="width: 100%; padding: 10px; font-size: 0.88rem; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                                        <i class="fas fa-paper-plane"></i> Resend Tax Invoice Email
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

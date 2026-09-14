@@ -154,17 +154,21 @@
                                                 <span style="color: var(--text-muted); font-size: 0.8rem;"> units</span>
                                             </td>
                                             <td>
-                                                {% if product.stock > 10 %}
-                                                    <span class="badge-pill badge-in-stock">
-                                                        <i class="fas fa-circle-check"></i> In Stock
+                                                {% if product.stock == 0 %}
+                                                    <span class="badge-pill badge-out-of-stock">
+                                                        <i class="fas fa-circle-xmark"></i> Out of Stock
                                                     </span>
-                                                {% elif product.stock > 0 %}
+                                                {% elif product.stock <= 5 %}
+                                                    <span class="badge-pill" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-weight:700;">
+                                                        <i class="fas fa-triangle-exclamation"></i> Urgent Reorder ({{ product.stock }})
+                                                    </span>
+                                                {% elif product.stock <= 10 %}
                                                     <span class="badge-pill badge-low-stock">
                                                         <i class="fas fa-triangle-exclamation"></i> Low Stock
                                                     </span>
                                                 {% else %}
-                                                    <span class="badge-pill badge-out-of-stock">
-                                                        <i class="fas fa-circle-xmark"></i> Out of Stock
+                                                    <span class="badge-pill badge-in-stock">
+                                                        <i class="fas fa-circle-check"></i> In Stock
                                                     </span>
                                                 {% endif %}
                                             </td>

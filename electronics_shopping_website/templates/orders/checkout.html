@@ -5,48 +5,227 @@
 
 {% block content %}
 <div class="container py-5">
-  <h1 class="display-5 fw-bold mb-5 text-dark">Checkout</h1>
-
-  <div class="row g-5">
-    <div class="col-lg-7">
-      <div class="card border-0 shadow-sm rounded-4 bg-light p-4 mb-4">
-        <h4 class="fw-bold mb-4">Shipping Information</h4>
-        <form id="checkoutForm">
-          <div class="mb-3">
-            <label for="shippingAddress" class="form-label fw-bold text-muted">Full Shipping Address</label>
-            <textarea class="form-control bg-white" id="shippingAddress" rows="4" placeholder="123 Tech Lane, Silicon Valley, CA 94025" required></textarea>
-            <div class="form-text">Please include your apartment or suite number if applicable.</div>
-          </div>
-        </form>
-      </div>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="display-5 fw-bold mb-1 text-dark">Checkout</h1>
+      <p class="text-muted">Review your items, delivery address, and payment method.</p>
     </div>
-
-    <div class="col-lg-5">
-      <div class="card border-0 shadow-sm rounded-4 bg-light p-4">
-        <h4 class="fw-bold mb-4">Order Summary</h4>
-        
-        <ul class="list-group list-group-flush mb-4 bg-transparent">
-          {% for item in cart.items.all %}
-          <li class="list-group-item bg-transparent d-flex justify-content-between lh-sm px-0 border-light border-bottom">
-            <div>
-              <h6 class="my-0 fw-bold">{{ item.product.name }}</h6>
-              <small class="text-muted">Qty: {{ item.quantity }}</small>
-            </div>
-            <span class="text-muted">${{ item.get_subtotal }}</span>
-          </li>
-          {% endfor %}
-        </ul>
-
-        <div class="d-flex justify-content-between mb-4 pt-2">
-          <span class="fs-5 fw-bold text-dark">Total to Pay</span>
-          <span class="fs-5 fw-bold text-success">${{ cart.get_total_price }}</span>
-        </div>
-        
-        <button id="confirmPayBtn" class="btn btn-success btn-lg w-100 fw-bold shadow-sm">
-          Confirm & Pay
-        </button>
-      </div>
-    </div>
+    <a href="{% url 'cart_detail' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+      ← Back to Cart
+    </a>
   </div>
+
+  {% if error %}
+    <div class="alert alert-danger rounded-4 shadow-sm mb-4" role="alert">
+      <div class="d-flex align-items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16">
+          <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+        </svg>
+        <span>{{ error }}</span>
+      </div>
+    </div>
+  {% endif %}
+
+  <form method="POST" action="{% url 'orders:checkout' %}" id="checkoutForm">
+    {% csrf_token %}
+    <div class="row g-5">
+      <!-- Left Column: Address & Payment Method -->
+      <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4 bg-light p-4 mb-4">
+          
+          <!-- 1. Address Section -->
+          <h4 class="fw-bold mb-3 d-flex align-items-center gap-2">
+            <span class="badge bg-primary rounded-circle" style="width: 2rem; height: 2rem; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem;">1</span>
+            Delivery Address
+          </h4>
+          
+          {% if addresses %}
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-muted small">Choose a Saved Address:</label>
+              <div class="d-flex flex-column gap-2 mb-3">
+                {% for addr in addresses %}
+                  <div class="card border p-3 rounded-3 bg-white address-card" style="cursor: pointer;">
+                    <div class="form-check">
+                      <input 
+                        class="form-check-input saved-address-radio" 
+                        type="radio" 
+                        name="savedAddressRadio" 
+                        id="addr{{ addr.id }}" 
+                        value="{{ addr.get_formatted_address }}"
+                        {% if forloop.first %}checked{% endif %}
+                      >
+                      <label class="form-check-label fw-bold text-dark w-100" for="addr{{ addr.id }}" style="cursor: pointer;">
+                        {{ addr.full_name }}
+                        <span class="badge bg-secondary-subtle text-secondary small ms-2">{{ addr.address_type }}</span>
+                        {% if addr.is_default %}<span class="badge bg-success-subtle text-success small ms-1">Default</span>{% endif %}
+                      </label>
+                      <div class="text-muted small mt-1">
+                        {{ addr.street_address }}, {{ addr.city }}, {{ addr.state }} - {{ addr.postal_code }}
+                        <br>Phone: {{ addr.phone_number }}
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Custom / New Address -->
+          <div class="mb-4">
+            <label for="shippingAddress" class="form-label fw-semibold text-muted small">
+              {% if addresses %}Or Enter a Different Shipping Address:{% else %}Enter Full Shipping Address:{% endif %}
+            </label>
+            <textarea 
+              class="form-control bg-white rounded-3 shadow-none border" 
+              name="shipping_address"
+              id="shippingAddress" 
+              rows="3" 
+              placeholder="Recipient Name, Street Address, Landmark, City, State - PIN Code, Mobile Number"
+              required
+            >{% if addresses %}{{ addresses.0.get_formatted_address }}{% endif %}</textarea>
+            <div class="form-text">Include full name, building, street, city, pin code, and contact number.</div>
+          </div>
+
+          <!-- 2. Payment Section -->
+          <h4 class="fw-bold mb-3 mt-4 d-flex align-items-center gap-2">
+            <span class="badge bg-primary rounded-circle" style="width: 2rem; height: 2rem; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem;">2</span>
+            Payment Method
+          </h4>
+
+          <!-- Option 1: Payment Gateway (UPI, Card, etc.) -->
+          <div class="card border border-2 border-primary-subtle p-3 rounded-4 bg-white mb-3 shadow-sm" id="paymentGatewayCard">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="paymentMethod" id="paySandbox" value="Sandbox" checked>
+              <label class="form-check-label fw-bold text-dark d-flex align-items-center gap-2 flex-wrap" for="paySandbox" style="cursor: pointer;">
+                <span class="fs-6">Payment Gateway</span>
+                <span class="badge bg-primary text-white rounded-pill small">(UPI, Card, etc.)</span>
+              </label>
+              <div class="text-muted small mt-1">
+                Fast and secure online payment via Credit/Debit Cards, UPI QR Code, or NetBanking with secure processing.
+              </div>
+              <div class="d-flex align-items-center gap-2 mt-2 pt-2 border-top border-light text-muted small flex-wrap">
+                <span class="badge bg-light text-dark border">Visa / Mastercard</span>
+                <span class="badge bg-light text-dark border">UPI QR Code</span>
+                <span class="badge bg-light text-dark border">NetBanking</span>
+                <span class="text-success ms-auto fw-semibold small">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-shield-lock-fill me-1" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8 0c-.69 0-1.843.265-2.928.56-1.11.3-2.229.655-2.887.87a1.54 1.54 0 0 0-1.044 1.262c-.596 4.477.787 7.795 2.464 9.99a11.8 11.8 0 0 0 4.395 3.32 1.5 1.5 0 0 0 1.96 0 11.8 11.8 0 0 0 4.395-3.32c1.677-2.195 3.06-5.513 2.464-9.99A1.54 1.54 0 0 0 13.815 1.43c-.658-.215-1.777-.57-2.887-.87C9.843.265 8.69 0 8 0m0 5a1.5 1.5 0 0 1 1.5 1.5v.5h.5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h.5v-.5A1.5 1.5 0 0 1 8 5m.5 2v-.5a.5.5 0 0 0-1 0V7z"/>
+                  </svg>
+                  Secure Payment
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Option 2: Cash On Delivery (COD) -->
+          <div class="card border p-3 rounded-4 bg-white mb-2 shadow-sm" id="codCard">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="paymentMethod" id="payCOD" value="COD">
+              <label class="form-check-label fw-bold text-dark d-flex align-items-center gap-2" for="payCOD" style="cursor: pointer;">
+                <span class="fs-6">Cash On Delivery (COD)</span>
+                <span class="badge bg-secondary-subtle text-secondary rounded-pill small">Pay at Doorstep</span>
+              </label>
+              <div class="text-muted small mt-1">Pay with cash upon physical delivery. Verification occurs upon delivery.</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Right Column: Order Summary Column -->
+      <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4 bg-light p-4 sticky-top" style="top: 20px;">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold mb-0">Order Summary</h4>
+            <span class="badge bg-dark rounded-pill px-3 py-1.5">{{ cart_items|length }} item{{ cart_items|length|pluralize }}</span>
+          </div>
+
+          <!-- Hidden input for selected item IDs -->
+          <input type="hidden" id="selectedItemIdsInput" name="selected_item_ids" value="{{ selected_item_ids|join:',' }}">
+          
+          <ul class="list-group list-group-flush mb-4 bg-transparent">
+            {% for item in cart_items %}
+            <li class="list-group-item bg-transparent d-flex justify-content-between lh-sm px-0 border-light border-bottom">
+              <div>
+                <h6 class="my-0 fw-bold">{{ item.product.name }}</h6>
+                <small class="text-muted">Qty: {{ item.quantity }} × ₹{{ item.product.get_discounted_price|floatformat:2 }}</small>
+              </div>
+              <span class="text-dark fw-bold">₹{{ item.get_subtotal|floatformat:2 }}</span>
+            </li>
+            {% empty %}
+            <li class="list-group-item bg-transparent text-muted text-center py-3">
+              No items selected for checkout.
+            </li>
+            {% endfor %}
+          </ul>
+
+          <div class="d-flex justify-content-between mb-4 pt-2 border-top">
+            <span class="fs-5 fw-bold text-dark">Total Amount</span>
+            <span class="fs-4 fw-bold text-success">₹{{ checkout_total|floatformat:2 }}</span>
+          </div>
+          
+          <div id="checkoutAlert" class="alert alert-danger d-none mb-3"></div>
+
+          <!-- Dynamic Action Button -->
+          <button id="confirmPayBtn" type="button" class="btn btn-primary btn-lg w-100 fw-bold shadow py-3 rounded-pill" {% if not cart_items %}disabled{% endif %}>
+            <span id="confirmBtnText">Proceed to Payment Gateway (UPI, Card, etc.) →</span>
+          </button>
+          
+          <div class="text-center mt-3">
+            <small class="text-muted">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-shield-check me-1 text-success" viewBox="0 0 16 16">
+                <path d="M5.338 1.59a61.44 61.44 0 0 0-2.837.856.481.481 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.725 10.725 0 0 0 2.287 2.233c.346.244.652.42.893.533.12.057.218.095.293.118a.55.55 0 0 0 .101.025.615.615 0 0 0 .1-.025c.076-.023.174-.061.294-.118.24-.113.547-.29.893-.533a10.726 10.726 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.464 9.99a11.775 11.775 0 0 1-4.396 3.32 1.538 1.538 0 0 1-1.96 0 11.774 11.774 0 0 1-4.396-3.32C1.667 10.42.284 7.102.88 2.624A1.54 1.54 0 0 1 1.924 1.36c.658-.215 1.777-.57 2.887-.87z"/>
+                <path d="M10.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>
+              </svg>
+              Secure Checkout Portal
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const radios = document.querySelectorAll(".saved-address-radio");
+    const addressInput = document.getElementById("shippingAddress");
+    const paySandboxRadio = document.getElementById("paySandbox");
+    const payCODRadio = document.getElementById("payCOD");
+    const confirmBtn = document.getElementById("confirmPayBtn");
+    const confirmBtnText = document.getElementById("confirmBtnText");
+    const gatewayCard = document.getElementById("paymentGatewayCard");
+    const codCard = document.getElementById("codCard");
+
+    // Address selection
+    radios.forEach(radio => {
+      radio.addEventListener("change", function() {
+        if (this.checked && addressInput) {
+          addressInput.value = this.value;
+        }
+      });
+    });
+
+    // Dynamic Button Text and UI highlight based on payment selection
+    function updatePaymentUI() {
+      if (paySandboxRadio && paySandboxRadio.checked) {
+        confirmBtnText.textContent = "Proceed to Payment Gateway (UPI, Card, etc.) →";
+        confirmBtn.className = "btn btn-primary btn-lg w-100 fw-bold shadow py-3 rounded-pill";
+        if (gatewayCard) gatewayCard.classList.add("border-primary-subtle", "border-2");
+        if (codCard) codCard.classList.remove("border-primary-subtle", "border-2");
+      } else if (payCODRadio && payCODRadio.checked) {
+        confirmBtnText.textContent = "Confirm Order (Cash On Delivery) →";
+        confirmBtn.className = "btn btn-success btn-lg w-100 fw-bold shadow py-3 rounded-pill";
+        if (codCard) codCard.classList.add("border-success-subtle", "border-2");
+        if (gatewayCard) gatewayCard.classList.remove("border-primary-subtle", "border-2");
+      }
+    }
+
+    if (paySandboxRadio && payCODRadio) {
+      paySandboxRadio.addEventListener("change", updatePaymentUI);
+      payCODRadio.addEventListener("change", updatePaymentUI);
+      updatePaymentUI();
+    }
+  });
+</script>
 {% endblock content %}
