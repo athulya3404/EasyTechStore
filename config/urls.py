@@ -19,6 +19,7 @@ from electronics_shopping_website.users.manager_views import (
     brand_import,
     brand_sample_template,
 )
+from electronics_shopping_website.users.views import email_verification_sent_view
 
 
 urlpatterns = [
@@ -41,6 +42,8 @@ urlpatterns = [
     path("users/", include("electronics_shopping_website.users.urls", namespace="users")),
     path("manager/", include("electronics_shopping_website.users.manager_urls", namespace="manager")),
     path("chatbot/", include("chatbot.urls", namespace="chatbot")),
+    path("accounts/confirm-email/", email_verification_sent_view, name="account_email_verification_sent"),
+    path("accounts/resend-verification/", email_verification_sent_view, name="account_resend_verification"),
     path("accounts/", include("allauth.urls")),
 
     # ----------------------------------------------------------------------

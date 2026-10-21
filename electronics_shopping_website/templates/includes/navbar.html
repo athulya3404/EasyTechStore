@@ -13,15 +13,24 @@
 
                 <!-- Header Search Form Box Start -->
                 <div class="header-search-form-box">
-                    <form class="header-search-form" id="headerForm" action="{% url 'home' %}#shop-section"
-                        method="GET">
-                        <div class="form-group position-relative">
-                            <input type="text" name="q" class="form-control"
+                    <form class="header-search-form" id="headerForm" action="{% url 'home' %}#shop-section" method="GET">
+                        <div class="form-group position-relative d-flex align-items-center">
+                            <input type="text" name="q" id="instantSearchInput" class="form-control" autocomplete="off"
                                 placeholder="Search laptops, smartphones, headphones..."
                                 value="{{ search_query|default:'' }}">
+                            
+                            <!-- Visual Search AI Camera Trigger -->
+                            <button type="button" class="header-camera-btn" id="visualSearchTriggerBtn" title="Search with Image / Photo" aria-label="Visual Search">
+                                <i class="fa-solid fa-camera" id="cameraIcon"></i>
+                            </button>
+                            <input type="file" id="visualSearchFileInput" accept="image/*" class="d-none">
+
                             <button type="submit" class="header-search-btn" aria-label="Search">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                             </button>
+
+                            <!-- Instant Autocomplete Dropdown -->
+                            <div id="instantSearchDropdown" class="instant-search-dropdown shadow-lg rounded-3 d-none"></div>
                         </div>
                     </form>
                 </div>
@@ -142,3 +151,256 @@
     </div>
 </header>
 <!-- Header End -->
+
+<style>
+.header-search-form .form-group {
+    display: flex;
+    align-items: center;
+    position: relative;
+    width: 100%;
+}
+.header-camera-btn {
+    position: absolute;
+    right: 50px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 1.05rem;
+    cursor: pointer;
+    padding: 6px;
+    transition: all 0.2s ease;
+    z-index: 5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+}
+.header-camera-btn:hover {
+    color: #0284c7;
+    background: rgba(2, 132, 199, 0.08);
+}
+.instant-search-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    min-width: 320px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    z-index: 99999;
+    overflow: hidden;
+    max-height: 440px;
+    overflow-y: auto;
+}
+.instant-search-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    text-decoration: none;
+    color: #1e293b;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.15s ease;
+}
+.instant-search-item:last-child {
+    border-bottom: none;
+}
+.instant-search-item:hover {
+    background: #f8fafc;
+}
+.instant-search-thumb {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    border-radius: 6px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    flex-shrink: 0;
+    padding: 2px;
+}
+.instant-search-info {
+    flex-grow: 1;
+    min-width: 0;
+}
+.instant-search-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0 0 2px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.instant-search-meta {
+    font-size: 0.75rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.instant-search-price {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #0284c7;
+    white-space: nowrap;
+}
+.instant-search-badge {
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 0.7rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+.instant-search-viewall {
+    display: block;
+    padding: 10px;
+    text-align: center;
+    background: #f8fafc;
+    color: #0284c7;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-decoration: none;
+    border-top: 1px solid #e2e8f0;
+}
+.instant-search-viewall:hover {
+    background: #f1f5f9;
+    color: #0369a1;
+}
+.instant-search-empty {
+    padding: 20px;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.88rem;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById("instantSearchInput");
+    const dropdown = document.getElementById("instantSearchDropdown");
+    const cameraBtn = document.getElementById("visualSearchTriggerBtn");
+    const fileInput = document.getElementById("visualSearchFileInput");
+    const cameraIcon = document.getElementById("cameraIcon");
+    let debounceTimer = null;
+
+    if (!searchInput || !dropdown) return;
+
+    // 1. Real-Time Autocomplete
+    searchInput.addEventListener("input", function() {
+        const query = this.value.trim();
+        clearTimeout(debounceTimer);
+
+        if (query.length < 2) {
+            dropdown.classList.add("d-none");
+            dropdown.innerHTML = "";
+            return;
+        }
+
+        debounceTimer = setTimeout(() => {
+            fetch(`/products/api/autocomplete/?q=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(data => {
+                    const items = data.results || [];
+                    if (items.length === 0) {
+                        dropdown.innerHTML = `<div class="instant-search-empty"><i class="fa-solid fa-magnifying-glass me-2 text-muted"></i>No products found matching "<strong>${escapeHtml(query)}</strong>"</div>`;
+                        dropdown.classList.remove("d-none");
+                        return;
+                    }
+
+                    let html = items.map(p => `
+                        <a href="${p.url}" class="instant-search-item">
+                            <img src="${p.image_url}" alt="${escapeHtml(p.name)}" class="instant-search-thumb" onerror="this.src='/static/images/placeholder.png'">
+                            <div class="instant-search-info">
+                                <div class="instant-search-title">${escapeHtml(p.name)}</div>
+                                <div class="instant-search-meta">
+                                    ${p.category ? `<span class="instant-search-badge">${escapeHtml(p.category)}</span>` : ''}
+                                    ${p.brand ? `<span>${escapeHtml(p.brand)}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="instant-search-price">₹${p.discounted_price.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                        </a>
+                    `).join("");
+
+                    html += `<a href="/?q=${encodeURIComponent(query)}#shop-section" class="instant-search-viewall">
+                        View all results for "${escapeHtml(query)}" <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </a>`;
+
+                    dropdown.innerHTML = html;
+                    dropdown.classList.remove("d-none");
+                })
+                .catch(() => {
+                    dropdown.classList.add("d-none");
+                });
+        }, 220);
+    });
+
+    // Close on click outside
+    document.addEventListener("click", function(e) {
+        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.add("d-none");
+        }
+    });
+
+    // Close on Escape key
+    searchInput.addEventListener("keydown", function(e) {
+        if (e.key === "Escape") {
+            dropdown.classList.add("d-none");
+        }
+    });
+
+    // 2. AI Camera Visual Search Trigger
+    if (cameraBtn && fileInput) {
+        cameraBtn.addEventListener("click", function() {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener("change", function() {
+            const file = this.files[0];
+            if (!file) return;
+
+            // Visual feedback: spin camera icon
+            cameraIcon.className = "fa-solid fa-spinner fa-spin text-primary";
+            cameraBtn.title = "Analyzing image with AI...";
+
+            const formData = new FormData();
+            formData.append("image", file);
+
+            fetch("/products/api/visual-search/", {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                cameraIcon.className = "fa-solid fa-camera";
+                cameraBtn.title = "Search with Image / Photo";
+                if (data.redirect_url) {
+                    window.location.href = data.redirect_url;
+                } else if (data.query) {
+                    window.location.href = `/?q=${encodeURIComponent(data.query)}#shop-section`;
+                }
+            })
+            .catch(() => {
+                cameraIcon.className = "fa-solid fa-camera";
+                cameraBtn.title = "Search with Image / Photo";
+                alert("Visual search failed. Please try a different image.");
+            });
+        });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+});
+</script>

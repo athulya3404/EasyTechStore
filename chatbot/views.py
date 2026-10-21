@@ -5,6 +5,7 @@ Views for the RAG-powered Chatbot in EasyTech Store.
 import json
 import logging
 from django.conf import settings
+from django.core.cache import cache
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
@@ -30,7 +31,24 @@ def chat_api_view(request):
     Body: JSON {"message": "...", "top_k": 3}
     Returns: JSON {"reply": "...", "products": [...], "status": "success"}
     Saves message and reply in ChatMessage database.
+    Rate-limited to 20 requests per minute per IP to protect LLM quota.
     """
+    # Rate Limiting Check (20 requests per minute per client IP)
+    forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    client_ip = forwarded.split(",")[0].strip() if forwarded else request.META.get("REMOTE_ADDR", "unknown")
+    rate_key = f"chatbot_rate_{client_ip}"
+    request_count = cache.get(rate_key, 0)
+    if request_count >= 20:
+        return JsonResponse(
+            {
+                "status": "error",
+                "error": "Rate limit exceeded. Please wait a moment before sending more messages.",
+                "reply": "You are sending messages too quickly. Please wait a minute before asking another question."
+            },
+            status=429
+        )
+    cache.set(rate_key, request_count + 1, timeout=60)
+
     try:
         data = json.loads(request.body.decode("utf-8") or "{}")
     except Exception:

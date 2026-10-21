@@ -13,6 +13,28 @@
     <a href="{% url 'home' %}" class="btn btn-outline-primary fw-semibold">Continue Shopping</a>
   </div>
 
+  <!-- Status Filter Tabs / Counts -->
+  <div class="d-flex gap-2 mb-4 flex-wrap align-items-center">
+    <a href="{% url 'orders:my_orders' %}" class="btn btn-sm rounded-pill fw-semibold {% if not selected_status %}btn-primary shadow-sm{% else %}btn-outline-secondary{% endif %}">
+      All Orders ({{ total_count|default:0 }})
+    </a>
+    <a href="{% url 'orders:my_orders' %}?status=Pending" class="btn btn-sm rounded-pill fw-semibold {% if selected_status == 'Pending' %}btn-warning text-dark shadow-sm{% else %}btn-outline-warning text-dark{% endif %}">
+      <i class="bi bi-hourglass-split me-1"></i> Pending Payment ({{ pending_count|default:0 }})
+    </a>
+    <a href="{% url 'orders:my_orders' %}?status=Paid" class="btn btn-sm rounded-pill fw-semibold {% if selected_status == 'Paid' %}btn-success shadow-sm{% else %}btn-outline-success{% endif %}">
+      <i class="bi bi-check2-circle me-1"></i> Paid ({{ paid_count|default:0 }})
+    </a>
+    <a href="{% url 'orders:my_orders' %}?status=Shipped" class="btn btn-sm rounded-pill fw-semibold {% if selected_status == 'Shipped' %}btn-info text-dark shadow-sm{% else %}btn-outline-info text-dark{% endif %}">
+      <i class="bi bi-truck me-1"></i> Shipped ({{ shipped_count|default:0 }})
+    </a>
+    <a href="{% url 'orders:my_orders' %}?status=Delivered" class="btn btn-sm rounded-pill fw-semibold {% if selected_status == 'Delivered' %}btn-primary shadow-sm{% else %}btn-outline-primary{% endif %}">
+      <i class="bi bi-box-seam me-1"></i> Delivered ({{ delivered_count|default:0 }})
+    </a>
+    <a href="{% url 'orders:my_orders' %}?status=Cancelled" class="btn btn-sm rounded-pill fw-semibold {% if selected_status == 'Cancelled' %}btn-danger shadow-sm{% else %}btn-outline-danger{% endif %}">
+      <i class="bi bi-x-circle me-1"></i> Cancelled ({{ cancelled_count|default:0 }})
+    </a>
+  </div>
+
   {% if orders %}
     <div class="row g-4">
       {% for order in orders %}
@@ -219,9 +241,13 @@
           <path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5zM2 5h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5z"/>
         </svg>
       </div>
-      <h4 class="fw-bold">No orders placed yet</h4>
-      <p class="text-muted">You haven't purchased any electronic gadgets yet.</p>
-      <a href="{% url 'home' %}" class="btn btn-primary px-4 fw-semibold">Start Shopping</a>
+      <h4 class="fw-bold">{% if selected_status %}No {{ selected_status }} orders found{% else %}No orders placed yet{% endif %}</h4>
+      <p class="text-muted">{% if selected_status %}You currently do not have any orders with status "{{ selected_status }}".{% else %}You haven't purchased any electronic gadgets yet.{% endif %}</p>
+      {% if selected_status %}
+        <a href="{% url 'orders:my_orders' %}" class="btn btn-outline-secondary px-4 fw-semibold">View All Orders</a>
+      {% else %}
+        <a href="{% url 'home' %}" class="btn btn-primary px-4 fw-semibold">Start Shopping</a>
+      {% endif %}
     </div>
   {% endif %}
 </div>

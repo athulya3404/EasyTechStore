@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Request Return & Refund #{{ order.id }} - EasyTech{% endblock title %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-header bg-danger text-white py-4 px-4 text-center">
+          <div class="mb-2">
+            <i class="fa-solid fa-arrow-rotate-left fs-1"></i>
+          </div>
+          <h3 class="fw-bold mb-1">EasyTech 7-Day Return & Replacement Portal</h3>
+          <p class="mb-0 opacity-75">Order #{{ order.id }} • Delivered on {{ order.delivered_at|date:"M d, Y"|default:"Recently" }}</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+          <div class="alert alert-light border rounded-3 p-3 mb-4">
+            <h6 class="fw-bold mb-2 text-dark"><i class="fa-solid fa-shield-halved text-success me-1"></i> 7-Day Hassle-Free Guarantee</h6>
+            <p class="small text-muted mb-0">
+              You are eligible for full refund or free replacement within 7 days of delivery.
+              Once your request is approved, our courier partner will pick up the package from your delivery address.
+            </p>
+          </div>
+
+          <h5 class="fw-bold text-dark mb-3">Items in this Order</h5>
+          <div class="list-group mb-4">
+            {% for item in order.items.all %}
+            <div class="list-group-item d-flex align-items-center justify-content-between p-3 border rounded-3 mb-2">
+              <div class="d-flex align-items-center gap-3">
+                {% if item.product and item.product.image %}
+                  <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="rounded border p-1" style="width: 50px; height: 50px; object-fit: contain;">
+                {% endif %}
+                <div>
+                  <h6 class="mb-0 fw-semibold">{{ item.product.name|default:"Product" }}</h6>
+                  <small class="text-muted">Quantity: {{ item.quantity }}</small>
+                </div>
+              </div>
+              <span class="fw-bold text-primary">₹{{ item.get_subtotal }}</span>
+            </div>
+            {% endfor %}
+          </div>
+
+          <form method="POST" action="{% url 'orders:request_return' order.id %}">
+            {% csrf_token %}
+            
+            <div class="mb-4">
+              <label for="return_reason_select" class="form-label fw-bold text-dark">Primary Reason for Return <span class="text-danger">*</span></label>
+              <select class="form-select form-select-lg" id="return_reason_select" name="return_reason_category" required onchange="updateReasonText(this.value)">
+                <option value="" selected disabled>Select a reason...</option>
+                <option value="Damaged or defective device upon unboxing">Damaged or defective device upon unboxing</option>
+                <option value="Received incorrect model / color / specification">Received incorrect model / color / specification</option>
+                <option value="Missing accessories or parts from package">Missing accessories or parts from package</option>
+                <option value="Performance issue or hardware malfunction">Performance issue or hardware malfunction</option>
+                <option value="No longer needed / Changed my mind">No longer needed / Changed my mind</option>
+              </select>
+            </div>
+
+            <div class="mb-4">
+              <label for="return_reason" class="form-label fw-bold text-dark">Detailed Description of the Issue</label>
+              <textarea class="form-control" id="return_reason" name="return_reason" rows="3" placeholder="Please describe any defects, scratches, or missing parts..." required></textarea>
+            </div>
+
+            <div class="d-flex gap-3 justify-content-end pt-3 border-top">
+              <a href="{% url 'orders:confirmation' order.id %}" class="btn btn-outline-secondary px-4 fw-semibold">Cancel</a>
+              <button type="submit" class="btn btn-danger px-4 fw-bold shadow-sm">
+                <i class="fa-solid fa-paper-plane me-1"></i> Submit Return Request
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function updateReasonText(val) {
+  const textarea = document.getElementById("return_reason");
+  if (textarea && !textarea.value) {
+    textarea.value = val;
+  }
+}
+</script>
+{% endblock content %}

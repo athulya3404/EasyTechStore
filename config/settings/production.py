@@ -39,13 +39,26 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 # https://docs.djangoproject.com/en/dev/ref/settings/#secure-ssl-redirect
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
 # https://docs.djangoproject.com/en/dev/ref/settings/#session-cookie-secure
-SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = env.bool("DJANGO_SESSION_COOKIE_SECURE", default=SECURE_SSL_REDIRECT)
 # https://docs.djangoproject.com/en/dev/ref/settings/#session-cookie-name
-SESSION_COOKIE_NAME = "__Secure-sessionid"
+SESSION_COOKIE_NAME = "__Secure-sessionid" if SESSION_COOKIE_SECURE else "sessionid"
 # https://docs.djangoproject.com/en/dev/ref/settings/#csrf-cookie-secure
-CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = env.bool("DJANGO_CSRF_COOKIE_SECURE", default=SECURE_SSL_REDIRECT)
 # https://docs.djangoproject.com/en/dev/ref/settings/#csrf-cookie-name
-CSRF_COOKIE_NAME = "__Secure-csrftoken"
+CSRF_COOKIE_NAME = "__Secure-csrftoken" if CSRF_COOKIE_SECURE else "csrftoken"
+CSRF_TRUSTED_ORIGINS = env.list(
+    "DJANGO_CSRF_TRUSTED_ORIGINS",
+    default=[
+        "https://easystore1.me",
+        "https://www.easystore1.me",
+        "http://easystore1.me",
+        "http://www.easystore1.me",
+        "http://16.16.204.219",
+        "https://16.16.204.219",
+        "http://13.62.51.96",
+        "https://13.62.51.96",
+    ],
+)
 # https://docs.djangoproject.com/en/dev/topics/security/#ssl-https
 # https://docs.djangoproject.com/en/dev/ref/settings/#secure-hsts-seconds
 # TODO: set this to 60 seconds first and then to 518400 once you prove the former works
@@ -73,6 +86,8 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
+WHITENOISE_MAX_AGE = 31536000  # 1 year cache for static assets
+WHITENOISE_MANIFEST_STRICT = False
 
 # EMAIL
 # ------------------------------------------------------------------------------
@@ -99,10 +114,31 @@ ADMIN_URL = env("DJANGO_ADMIN_URL")
 # ------------------------------------------------------------------------------
 # https://anymail.readthedocs.io/en/stable/installation/#installing-anymail
 INSTALLED_APPS += ["anymail"]
-# https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
-# https://anymail.readthedocs.io/en/stable/installation/#anymail-settings-reference
-# https://anymail.readthedocs.io/en/stable/esps
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default=env("DJANGO_EMAIL_HOST_USER", default=""))
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default=env("DJANGO_EMAIL_HOST_PASSWORD", default=""))
+EMAIL_HOST = env("EMAIL_HOST", default=env("DJANGO_EMAIL_HOST", default="smtp.gmail.com"))
+EMAIL_PORT = env.int("EMAIL_PORT", default=env.int("DJANGO_EMAIL_PORT", default=587))
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=env.bool("DJANGO_EMAIL_USE_TLS", default=True))
+
+if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+    backend_val = env("DJANGO_EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
+    if "console" in backend_val:
+        EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    else:
+        EMAIL_BACKEND = backend_val
+else:
+    EMAIL_BACKEND = env(
+        "DJANGO_EMAIL_BACKEND",
+        default="django.core.mail.backends.console.EmailBackend",
+    )
+
+DEFAULT_FROM_EMAIL = env(
+    "DJANGO_DEFAULT_FROM_EMAIL",
+    default=env("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER) or "EasyTech <noreply@localhost>",
+)
+SERVER_EMAIL = env("DJANGO_SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
+EMAIL_TIMEOUT = 10
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
 ANYMAIL = {}
 
 

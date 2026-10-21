@@ -1,0 +1,13 @@
+<svg width="166" height="50" viewBox="0 0 166 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Icon Group -->
+  <circle cx="25" cy="25" r="23" fill="#0f172a"/>
+  <circle cx="25" cy="25" r="23" stroke="#0066FF" stroke-width="2"/>
+  <!-- Shopping Bag / Tech Icon -->
+  <path d="M29.5 19.5H28.5V17.5C28.5 15.5 26.9 14 25 14C23.1 14 21.5 15.5 21.5 17.5V19.5H20.5C19.4 19.5 18.5 20.4 18.5 21.5L17.5 33.5C17.5 34.6 18.4 35.5 19.5 35.5H30.5C31.6 35.5 32.5 34.6 32.5 33.5L31.5 21.5C31.5 20.4 30.6 19.5 29.5 19.5ZM23 17.5C23 16.4 23.9 15.5 25 15.5C26.1 15.5 27 16.4 27 17.5V19.5H23V17.5ZM25 24C26.66 24 28 25.34 28 27C28 28.66 26.66 30 25 30C23.34 30 22 28.66 22 27C22 25.34 23.34 24 25 24Z" fill="#FFFFFF"/>
+  <circle cx="25" cy="27" r="2" fill="#0066FF"/>
+  <!-- Brand Text -->
+  <text x="56" y="32" font-family="'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="22" letter-spacing="-0.3px">
+    <tspan fill="#0f172a">Easy</tspan><tspan fill="#0066FF">Tech</tspan>
+  </text>
+  <text x="57" y="41" font-family="'IBM Plex Sans', sans-serif" font-weight="500" font-size="8" fill="#64748b" letter-spacing="1.5px">ELECTRONICS</text>
+</svg>

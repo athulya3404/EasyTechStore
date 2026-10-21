@@ -21,6 +21,7 @@ urlpatterns = [
     # Customer Address Management
     path("addresses/add/", view=address_create, name="address_create"),
     path("addresses/<int:pk>/edit/", view=address_update, name="address_edit"),
+    path("addresses/<int:pk>/update/", view=address_update, name="address_update"),
     path("addresses/<int:pk>/delete/", view=address_delete, name="address_delete"),
     path("addresses/<int:pk>/set-default/", view=address_set_default, name="address_set_default"),
 ]

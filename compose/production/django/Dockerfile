@@ -17,15 +17,12 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 
 # Requirements are installed here to ensure they will be cached.
+COPY uv.lock pyproject.toml ${APP_HOME}/
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --no-install-project --no-dev
 COPY . ${APP_HOME}
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --no-dev
 
 # Python 'run' stage

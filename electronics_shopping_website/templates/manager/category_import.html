@@ -1,0 +1,158 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Categories (Excel/CSV) - EasyTech Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/manager.css' %}">
+</head>
+<body>
+    <div class="manager-wrapper">
+        {% include "manager/_sidebar.html" %}
+
+        <main class="manager-content">
+            <header class="manager-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-toggle" id="mobileSidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">
+                        <i class="fas fa-file-excel" style="color: #10b981;"></i>
+                        Bulk Import Categories
+                    </h1>
+                </div>
+                <div class="topbar-right">
+                    <a href="{% url 'manager:categories' %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> All Categories
+                    </a>
+                </div>
+            </header>
+
+            <div class="manager-container">
+                {% if messages %}
+                    <div class="manager-alert-container">
+                        {% for message in messages %}
+                            <div class="manager-alert manager-alert-{{ message.tags }}">
+                                <span><i class="fas fa-info-circle"></i> {{ message }}</span>
+                                <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:inherit;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px;">
+                    
+                    <!-- Upload Card -->
+                    <div class="manager-card">
+                        <div class="card-top">
+                            <div class="card-top-title">
+                                <i class="fas fa-cloud-arrow-up" style="color: var(--primary);"></i>
+                                Upload Spreadsheet File
+                            </div>
+                        </div>
+
+                        <div class="card-body" style="padding: 24px;">
+                            <form method="POST" enctype="multipart/form-data">
+                                {% csrf_token %}
+
+                                <div class="form-group mb-4">
+                                    <label class="form-label" for="excel_file">
+                                        Choose Excel (.xlsx) or CSV (.csv) File <span class="required">*</span>
+                                    </label>
+                                    <input 
+                                        type="file" 
+                                        name="excel_file" 
+                                        id="excel_file" 
+                                        class="form-control" 
+                                        accept=".xlsx, .xls, .csv" 
+                                        required
+                                        style="padding: 10px;"
+                                    >
+                                    <div class="form-hint">
+                                        Accepted formats: Microsoft Excel (.xlsx, .xls) and Comma-Separated Values (.csv).
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; gap: 14px; align-items: center; margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+                                    <button type="submit" class="btn btn-primary" style="padding: 10px 22px;">
+                                        <i class="fas fa-upload"></i> Upload & Import Categories
+                                    </button>
+                                    <a href="{% url 'manager:categories' %}" class="btn btn-secondary">
+                                        Cancel
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Instructions & Sample File Download Card -->
+                    <div class="manager-card">
+                        <div class="card-top">
+                            <div class="card-top-title">
+                                <i class="fas fa-circle-question" style="color: #6366f1;"></i>
+                                Spreadsheet Format Guide
+                            </div>
+                        </div>
+
+                        <div class="card-body" style="padding: 24px;">
+                            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">
+                                Download our pre-formatted Excel template to quickly organize and upload your product categories.
+                            </p>
+
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+                                <a href="{% url 'manager:category_sample_template' %}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 8px; color: #047857; background: #ecfdf5; border-color: #a7f3d0; font-weight: 700;">
+                                    <i class="fas fa-file-excel"></i> Download Excel Template (.xlsx)
+                                </a>
+                                <a href="{% url 'manager:category_sample_template' %}?format=csv" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 8px; color: #1e40af; background: #eff6ff; border-color: #bfdbfe; font-weight: 700;">
+                                    <i class="fas fa-file-csv"></i> Download CSV Template (.csv)
+                                </a>
+                            </div>
+
+                            <h4 style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin-bottom: 10px;">
+                                Expected Column Headers:
+                            </h4>
+
+                            <div style="background: #f8fafc; border: 1px solid var(--card-border); border-radius: var(--radius-md); overflow: hidden; font-size: 0.8rem;">
+                                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                                    <thead>
+                                        <tr style="background: #e2e8f0; color: #334155;">
+                                            <th style="padding: 8px 10px; border-bottom: 1px solid #cbd5e1;">Column</th>
+                                            <th style="padding: 8px 10px; border-bottom: 1px solid #cbd5e1;">Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td style="padding: 8px 10px; font-weight: 700; border-bottom: 1px solid #f1f5f9;">Category Name *</td>
+                                            <td style="padding: 8px 10px; color: var(--text-muted); border-bottom: 1px solid #f1f5f9;">e.g. Laptops, Smartphones (Required)</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 10px; font-weight: 700; border-bottom: 1px solid #f1f5f9;">Description</td>
+                                            <td style="padding: 8px 10px; color: var(--text-muted); border-bottom: 1px solid #f1f5f9;">Brief category overview (Optional)</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 10px; font-weight: 700;">Active</td>
+                                            <td style="padding: 8px 10px; color: var(--text-muted);">Yes or No (Default: Yes)</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <ul style="font-size: 0.8rem; color: var(--text-muted); margin-top: 16px; padding-left: 18px;">
+                                <li style="margin-bottom: 6px;">Categories already existing in the store will <strong>NOT</strong> be overwritten; existing category data is safely preserved.</li>
+                                <li>Empty rows will be automatically skipped.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{% static 'js/manager.js' %}"></script>
+</body>
+</html>

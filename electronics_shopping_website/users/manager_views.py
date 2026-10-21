@@ -59,6 +59,7 @@ from .manager import (
     manager_orders,
     order_detail,
     update_order_status,
+    trigger_auto_delivery_sweep,
     
     # Sales Reports
     sales_reports,

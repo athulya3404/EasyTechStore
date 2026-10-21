@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Compare Electronic Gadgets - EasyTech{% endblock title %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="display-6 fw-bold mb-1">Compare Gadgets</h1>
+      <p class="text-muted">Compare technical specifications, price, and features side-by-side.</p>
+    </div>
+    <a href="{% url 'home' %}" class="btn btn-outline-primary fw-semibold">Back to Store</a>
+  </div>
+
+  {% if category_mismatch_error %}
+    <div class="alert alert-warning rounded-4 shadow-sm mb-4 d-flex align-items-center gap-3">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle-fill text-warning flex-shrink-0" viewBox="0 0 16 16">
+        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+      </svg>
+      <div>
+        <h6 class="fw-bold mb-1">Different Categories Selected</h6>
+        <p class="mb-0 small text-muted">{{ category_mismatch_error }}</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Product Selectors Form (Same Category Only) -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div>
+        <h6 class="fw-bold mb-0 text-dark">Select Gadgets in the Same Category</h6>
+        <small class="text-muted">Direct comparison is only supported between items in the same category (e.g. Laptops vs Laptops).</small>
+      </div>
+      {% if selected_category %}
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1.5 small">
+          Active Category: {{ selected_category.name }}
+        </span>
+      {% endif %}
+    </div>
+
+    <form method="GET" action="{% url 'product_compare' %}" id="compareForm" class="row g-3 align-items-end">
+      <!-- 1. Category Filter -->
+      <div class="col-lg-3 col-md-4">
+        <label for="categoryFilter" class="form-label fw-bold small text-muted">1. Category:</label>
+        <select id="categoryFilter" name="category" class="form-select rounded-3">
+          <option value="">-- All Categories --</option>
+          {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if selected_category and selected_category.id == cat.id %}selected{% endif %}>
+              {{ cat.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- 2. Product 1 Selection -->
+      <div class="col-lg-4 col-md-4">
+        <label for="product1Select" class="form-label fw-bold small text-muted">2. First Gadget:</label>
+        <select id="product1Select" name="p1" class="form-select rounded-3" required>
+          <option value="">-- Choose First Gadget --</option>
+          {% for p in all_products %}
+            <option 
+              value="{{ p.id }}" 
+              data-category-id="{{ p.category.id }}"
+              data-category-name="{{ p.category.name }}"
+              {% if product1 and product1.id == p.id %}selected{% endif %}
+            >
+              {{ p.name }} ({{ p.category.name }}) - ₹{{ p.price }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- 3. Product 2 Selection (strictly same category) -->
+      <div class="col-lg-4 col-md-4">
+        <label for="product2Select" class="form-label fw-bold small text-muted">3. Second Gadget (Same Category):</label>
+        <select id="product2Select" name="p2" class="form-select rounded-3" required>
+          <option value="">-- Choose Second Gadget --</option>
+          {% for p in all_products %}
+            <option 
+              value="{{ p.id }}" 
+              data-category-id="{{ p.category.id }}"
+              data-category-name="{{ p.category.name }}"
+              {% if product2 and product2.id == p.id %}selected{% endif %}
+            >
+              {{ p.name }} ({{ p.category.name }}) - ₹{{ p.price }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-lg-1 col-md-12">
+        <button type="submit" class="btn btn-primary w-100 fw-bold py-2 shadow-sm" id="compareSubmitBtn">
+          Compare
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {% if product1 and product2 %}
+    <!-- Side-by-Side Comparison Table -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover mb-0 align-middle text-center">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 25%;" class="text-start ps-4">Attribute / Feature</th>
+              <th style="width: 37.5%;">
+                <h5 class="fw-bold text-primary mb-1">{{ product1.name }}</h5>
+                <span class="badge bg-secondary">{{ product1.category.name }}</span>
+              </th>
+              <th style="width: 37.5%;">
+                <h5 class="fw-bold text-primary mb-1">{{ product2.name }}</h5>
+                <span class="badge bg-secondary">{{ product2.category.name }}</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Product Image -->
+            <tr>
+              <td class="fw-bold text-start ps-4">Product Image</td>
+              <td>
+                <img src="{% if product1.image %}{{ product1.image.url }}{% else %}{% static 'images/placeholder.png' %}{% endif %}" alt="{{ product1.name }}" style="max-height: 150px; object-fit: contain;">
+              </td>
+              <td>
+                <img src="{% if product2.image %}{{ product2.image.url }}{% else %}{% static 'images/placeholder.png' %}{% endif %}" alt="{{ product2.name }}" style="max-height: 150px; object-fit: contain;">
+              </td>
+            </tr>
+
+            <!-- Brand -->
+            <tr>
+              <td class="fw-bold text-start ps-4">Brand</td>
+              <td class="fw-semibold">{{ product1.brand.name|default:"EasyTech" }}</td>
+              <td class="fw-semibold">{{ product2.brand.name|default:"EasyTech" }}</td>
+            </tr>
+
+            <!-- Price & Discount -->
+            <tr>
+              <td class="fw-bold text-start ps-4">Price & Discount</td>
+              <td>
+                <span class="fs-5 fw-bold text-success">₹{{ product1.get_discounted_price|floatformat:2 }}</span>
+                {% if product1.discount > 0 %}
+                  <span class="text-muted text-decoration-line-through small ms-1">₹{{ product1.price|floatformat:2 }}</span>
+                  <span class="badge bg-danger ms-1">-{{ product1.discount|floatformat:0 }}%</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="fs-5 fw-bold text-success">₹{{ product2.get_discounted_price|floatformat:2 }}</span>
+                {% if product2.discount > 0 %}
+                  <span class="text-muted text-decoration-line-through small ms-1">₹{{ product2.price|floatformat:2 }}</span>
+                  <span class="badge bg-danger ms-1">-{{ product2.discount|floatformat:0 }}%</span>
+                {% endif %}
+              </td>
+            </tr>
+
+            <!-- Customer Rating -->
+            <tr>
+              <td class="fw-bold text-start ps-4">Customer Rating</td>
+              <td>
+                <span class="text-warning fw-bold fs-5">★ {{ product1.average_rating }}</span>
+                <span class="text-muted small">({{ product1.review_count }} reviews)</span>
+              </td>
+              <td>
+                <span class="text-warning fw-bold fs-5">★ {{ product2.average_rating }}</span>
+                <span class="text-muted small">({{ product2.review_count }} reviews)</span>
+              </td>
+            </tr>
+
+            <!-- Stock Availability -->
+            <tr>
+              <td class="fw-bold text-start ps-4">Availability</td>
+              <td>
+                {% if product1.stock > 0 %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle">In Stock ({{ product1.stock }})</span>
+                {% else %}
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Out of Stock</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if product2.stock > 0 %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle">In Stock ({{ product2.stock }})</span>
+                {% else %}
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Out of Stock</span>
+                {% endif %}
+              </td>
+            </tr>
+
+            <!-- Technical Specifications Section Header -->
+            <tr class="table-primary bg-primary-subtle">
+              <td colspan="3" class="fw-bold text-start ps-4 text-uppercase small tracking-wider text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cpu me-2" viewBox="0 0 16 16">
+                  <path d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2A2.5 2.5 0 0 1 14 4.5h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14a2.5 2.5 0 0 1-2.5 2.5v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14A2.5 2.5 0 0 1 2 11.5H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2A2.5 2.5 0 0 1 4.5 2V.5A.5.5 0 0 1 5 0m-.5 3A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13h7a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 11.5 3zM5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5z"/>
+                </svg>
+                Detailed Technical Specifications
+              </td>
+            </tr>
+
+            {% if comparison_specs %}
+              {% for spec in comparison_specs %}
+              <tr>
+                <td class="fw-bold text-start ps-4 text-secondary">{{ spec.attribute }}</td>
+                <td class="fw-semibold text-dark">{{ spec.val1 }}</td>
+                <td class="fw-semibold text-dark">{{ spec.val2 }}</td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td class="fw-bold text-start ps-4">Specifications</td>
+                <td class="text-muted small">No specifications entered.</td>
+                <td class="text-muted small">No specifications entered.</td>
+              </tr>
+            {% endif %}
+
+            <!-- Description -->
+            <tr>
+              <td class="fw-bold text-start ps-4">Description</td>
+              <td class="text-start ps-4 text-muted small">{{ product1.description|default:"-" }}</td>
+              <td class="text-start ps-4 text-muted small">{{ product2.description|default:"-" }}</td>
+            </tr>
+
+            <!-- Actions -->
+            <tr>
+              <td class="fw-bold text-start ps-4">Purchase Action</td>
+              <td>
+                <div class="d-flex justify-content-center gap-2">
+                  <button class="btn btn-outline-primary btn-sm add-to-cart-btn" data-product-id="{{ product1.id }}" {% if product1.stock == 0 %}disabled{% endif %}>
+                    Add to Cart
+                  </button>
+                  <button class="btn btn-success btn-sm buy-now-btn" data-product-id="{{ product1.id }}" {% if product1.stock == 0 %}disabled{% endif %}>
+                    Buy Now
+                  </button>
+                </div>
+              </td>
+              <td>
+                <div class="d-flex justify-content-center gap-2">
+                  <button class="btn btn-outline-primary btn-sm add-to-cart-btn" data-product-id="{{ product2.id }}" {% if product2.stock == 0 %}disabled{% endif %}>
+                    Add to Cart
+                  </button>
+                  <button class="btn btn-success btn-sm buy-now-btn" data-product-id="{{ product2.id }}" {% if product2.stock == 0 %}disabled{% endif %}>
+                    Buy Now
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="text-center py-5">
+      <div class="mb-3 text-muted">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-arrow-left-right" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5zm14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5z"/>
+        </svg>
+      </div>
+      <h4 class="fw-bold">Select Two Electronic Gadgets to Compare</h4>
+      <p class="text-muted">Pick any 2 laptops, smartphones, or accessories above to see how they stack up.</p>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const catFilter = document.getElementById("categoryFilter");
+  const p1Select = document.getElementById("product1Select");
+  const p2Select = document.getElementById("product2Select");
+  const compareForm = document.getElementById("compareForm");
+
+  function filterOptionsByCategory(selectElem, targetCatId, excludeProductId = null) {
+    const options = selectElem.querySelectorAll("option");
+    let hasSelectedValid = false;
+
+    options.forEach(opt => {
+      if (!opt.value) {
+        // Default prompt option
+        opt.hidden = false;
+        opt.disabled = false;
+        return;
+      }
+      const optCatId = opt.getAttribute("data-category-id");
+      const isSameCategory = !targetCatId || optCatId === targetCatId;
+      const isExcluded = excludeProductId && opt.value === excludeProductId;
+
+      if (isSameCategory && !isExcluded) {
+        opt.hidden = false;
+        opt.disabled = false;
+        if (opt.selected) hasSelectedValid = true;
+      } else {
+        opt.hidden = true;
+        opt.disabled = true;
+        if (opt.selected) opt.selected = false;
+      }
+    });
+
+    if (!hasSelectedValid && selectElem.value) {
+      selectElem.value = "";
+    }
+  }
+
+  function syncSameCategoryDropdowns() {
+    const p1SelectedOpt = p1Select.options[p1Select.selectedIndex];
+    const p1CatId = p1SelectedOpt && p1SelectedOpt.value ? p1SelectedOpt.getAttribute("data-category-id") : null;
+    const activeCatId = p1CatId || (catFilter ? catFilter.value : null);
+
+    if (p1CatId && catFilter && catFilter.value !== p1CatId) {
+      catFilter.value = p1CatId;
+    }
+
+    // Filter Product 1 based on selected category if set
+    if (!p1CatId && activeCatId) {
+      filterOptionsByCategory(p1Select, activeCatId);
+    }
+
+    // Strictly filter Product 2 to the active category and exclude Product 1
+    const p1Val = p1Select.value;
+    filterOptionsByCategory(p2Select, activeCatId, p1Val);
+  }
+
+  if (catFilter) {
+    catFilter.addEventListener("change", function () {
+      const selectedCat = this.value;
+      filterOptionsByCategory(p1Select, selectedCat);
+      filterOptionsByCategory(p2Select, selectedCat, p1Select.value);
+    });
+  }
+
+  if (p1Select) {
+    p1Select.addEventListener("change", function () {
+      syncSameCategoryDropdowns();
+    });
+  }
+
+  if (p2Select) {
+    p2Select.addEventListener("change", function () {
+      const p2SelectedOpt = p2Select.options[p2Select.selectedIndex];
+      const p2CatId = p2SelectedOpt && p2SelectedOpt.value ? p2SelectedOpt.getAttribute("data-category-id") : null;
+      if (p2CatId && (!catFilter.value || !p1Select.value)) {
+        if (catFilter) catFilter.value = p2CatId;
+        filterOptionsByCategory(p1Select, p2CatId, p2Select.value);
+      }
+    });
+  }
+
+  if (compareForm) {
+    compareForm.addEventListener("submit", function (e) {
+      const p1Val = p1Select.value;
+      const p2Val = p2Select.value;
+
+      if (!p1Val || !p2Val) {
+        e.preventDefault();
+        alert("Please select both gadgets to compare.");
+        return;
+      }
+
+      if (p1Val === p2Val) {
+        e.preventDefault();
+        alert("Please choose two different gadgets to compare.");
+        return;
+      }
+
+      const p1Opt = p1Select.options[p1Select.selectedIndex];
+      const p2Opt = p2Select.options[p2Select.selectedIndex];
+      const cat1 = p1Opt ? p1Opt.getAttribute("data-category-id") : null;
+      const cat2 = p2Opt ? p2Opt.getAttribute("data-category-id") : null;
+
+      if (cat1 && cat2 && cat1 !== cat2) {
+        e.preventDefault();
+        alert("Comparison is only supported for gadgets in the same category (e.g. Laptops vs Laptops). Please select products from the same category.");
+      }
+    });
+  }
+
+  // Run on initial load
+  syncSameCategoryDropdowns();
+});
+</script>
+{% endblock content %}

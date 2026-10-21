@@ -98,3 +98,67 @@ from .address_views import (
     address_delete,
     address_set_default,
 )
+
+from allauth.account.models import EmailAddress
+
+
+def email_verification_sent_view(request):
+    """
+    Renders /accounts/confirm-email/ and handles Re-send Verification requests.
+    """
+    email = request.GET.get("email", "").strip()
+    if not email and hasattr(request, "user") and request.user.is_authenticated:
+        email = request.user.email or ""
+
+    if request.method == "POST":
+        email = request.POST.get("email", "").strip()
+        if not email:
+            messages.error(request, _("Please enter your registered email address."))
+        else:
+            email_record = EmailAddress.objects.filter(email__iexact=email).first()
+            if email_record:
+                if email_record.verified:
+                    messages.info(request, _("This email address is already verified! You can log in."))
+                    return redirect("account_login")
+                else:
+                    try:
+                        email_record.send_confirmation(request=request, signup=True)
+                        messages.success(
+                            request,
+                            _(f"A fresh verification email has been sent to {email}. Please check your inbox and spam folder."),
+                        )
+                    except Exception as e:
+                        messages.error(request, _(f"Error sending verification email: {e}"))
+            else:
+                user_match = User.objects.filter(email__iexact=email).first()
+                if user_match:
+                    email_record = EmailAddress.objects.create(
+                        user=user_match,
+                        email=user_match.email,
+                        verified=False,
+                        primary=True,
+                    )
+                    try:
+                        email_record.send_confirmation(request=request, signup=True)
+                        messages.success(
+                            request,
+                            _(f"A fresh verification email has been sent to {email}. Please check your inbox and spam folder."),
+                        )
+                    except Exception as e:
+                        messages.error(request, _(f"Error sending verification email: {e}"))
+                else:
+                    messages.info(
+                        request,
+                        _(f"If an account exists with {email}, a verification email has been sent."),
+                    )
+
+        return redirect(f"{reverse('account_email_verification_sent')}?email={email}")
+
+    return render(
+        request,
+        "account/verification_sent.html",
+        {
+            "email": email,
+        },
+    )
+

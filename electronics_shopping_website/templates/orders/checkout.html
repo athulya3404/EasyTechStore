@@ -226,6 +226,22 @@
       payCODRadio.addEventListener("change", updatePaymentUI);
       updatePaymentUI();
     }
+
+    // Guard against Alt + Left Arrow during checkout process
+    let orderPlacementInProgress = false;
+    if (confirmBtn) {
+      confirmBtn.addEventListener("click", function() {
+        orderPlacementInProgress = true;
+      });
+    }
+
+    window.addEventListener("keydown", function(e) {
+      if (orderPlacementInProgress && e.altKey && (e.key === "ArrowLeft" || e.keyCode === 37)) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    }, true);
   });
 </script>
 {% endblock content %}

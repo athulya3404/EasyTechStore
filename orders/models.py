@@ -12,6 +12,8 @@ class Order(models.Model):
     STATUS_SHIPPED = 'Shipped'
     STATUS_DELIVERED = 'Delivered'
     STATUS_CANCELLED = 'Cancelled'
+    STATUS_RETURN_REQUESTED = 'Return_Requested'
+    STATUS_RETURNED = 'Returned'
 
     STATUS_CHOICES = (
         (STATUS_PENDING, 'Pending'),
@@ -20,6 +22,8 @@ class Order(models.Model):
         (STATUS_SHIPPED, 'Shipped'),
         (STATUS_DELIVERED, 'Delivered'),
         (STATUS_CANCELLED, 'Cancelled'),
+        (STATUS_RETURN_REQUESTED, 'Return Requested'),
+        (STATUS_RETURNED, 'Returned'),
     )
     
     user = models.ForeignKey(
@@ -57,6 +61,17 @@ class Order(models.Model):
     )
 
     # Delivery & Logistics Simulation
+    paid_at = models.DateTimeField(
+        null=True, 
+        blank=True, 
+        help_text="Timestamp when customer payment was confirmed"
+    )
+    auto_delivery_days = models.PositiveSmallIntegerField(
+        default=3,
+        null=True,
+        blank=True,
+        help_text="Random delivery duration in days assigned to order"
+    )
     estimated_delivery_date = models.DateField(
         null=True, 
         blank=True, 
@@ -79,6 +94,8 @@ class Order(models.Model):
         blank=True, 
         help_text="Timestamp when the PDF tax invoice email was successfully dispatched"
     )
+    return_reason = models.CharField(max_length=255, blank=True, null=True, help_text="Customer reason for return/replacement")
+    return_requested_at = models.DateTimeField(null=True, blank=True, help_text="Timestamp when return was initiated")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

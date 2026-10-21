@@ -12,3 +12,7 @@ venv
 .envs/
 .venv/
 **/__pycache__/
+.pytest_cache/
+electronics_shopping_website/media/
+tests/
+docs/

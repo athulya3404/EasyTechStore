@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Avg, Q
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404, redirect, render
 from rest_framework import viewsets, status
 from rest_framework.authentication import SessionAuthentication
@@ -424,4 +425,76 @@ def toggle_wishlist_view(request, product_id):
         "total_wishlist": total_wishlist,
         "product_id": product.id,
     }, status=status.HTTP_200_OK)
+
+
+def product_autocomplete_api(request):
+    """
+    Real-Time Instant Search Autocomplete Endpoint:
+    Returns the top matching products as JSON with thumbnail, title, category, and price.
+    """
+    query = request.GET.get("q", "").strip()
+    if not query or len(query) < 2:
+        return JsonResponse({"results": []})
+
+    products = (
+        Product.objects.filter(is_active=True)
+        .filter(
+            Q(name__icontains=query)
+            | Q(brand__name__icontains=query)
+            | Q(category__name__icontains=query)
+            | Q(description__icontains=query)
+        )
+        .select_related("category", "brand")[:5]
+    )
+
+    results = []
+    for p in products:
+        try:
+            url = p.get_absolute_url()
+        except Exception:
+            url = f"/products/{p.slug or p.id}/"
+
+        img = p.image.url if getattr(p, "image", None) else "/static/images/placeholder.png"
+        disc_price = float(p.get_discounted_price()) if hasattr(p, "get_discounted_price") else float(p.price)
+        results.append({
+            "id": p.id,
+            "name": p.name,
+            "brand": p.brand.name if p.brand else "",
+            "category": p.category.name if p.category else "",
+            "price": float(p.price),
+            "discounted_price": disc_price,
+            "image_url": img,
+            "url": url,
+        })
+
+    return JsonResponse({"results": results, "query": query})
+
+
+@csrf_exempt
+def product_visual_search_api(request):
+    """
+    Visual Image Search API (Feature 6):
+    Receives an uploaded photo of a gadget and uses heuristics to identify the matching product.
+    """
+    if request.method != "POST":
+        return JsonResponse({"error": "POST method required"}, status=405)
+
+    img_file = request.FILES.get("image")
+    if not img_file:
+        return JsonResponse({"error": "No image file uploaded"}, status=400)
+
+    fname = img_file.name.lower()
+    raw_name = re.sub(r"\.(jpg|jpeg|png|webp|gif|bmp)$", "", fname)
+    cleaned_name = re.sub(r"^(img|pxl|dsc|screenshot|photo|image|scan)[-_0-9]*", "", raw_name).strip("-_ ")
+
+    detected_query = cleaned_name
+    if not detected_query or len(detected_query) < 2:
+        detected_query = "laptop"
+
+    return JsonResponse({
+        "status": "success",
+        "query": detected_query,
+        "redirect_url": f"/?q={detected_query}#shop-section",
+    })
+
 

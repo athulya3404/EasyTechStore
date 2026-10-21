@@ -476,7 +476,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
                 if (response.ok && data.success) {
-                    window.location.href = data.redirect_url || "/orders/my-orders/";
+                    window.location.replace(data.redirect_url || "/orders/my-orders/");
                 } else {
                     // Fallback to native form submission so order placement never fails
                     const checkoutForm = document.getElementById("checkoutForm");

@@ -6,6 +6,8 @@ from .views import (
     product_compare_view,
     wishlist_view,
     toggle_wishlist_view,
+    product_autocomplete_api,
+    product_visual_search_api,
 )
 
 
@@ -14,6 +16,8 @@ app_name = "products"
 urlpatterns = [
     # UI Routes
     path("", product_list_view, name="list"),
+    path("api/autocomplete/", product_autocomplete_api, name="autocomplete_api"),
+    path("api/visual-search/", product_visual_search_api, name="visual_search_api"),
     path("compare/", product_compare_view, name="compare"),
     path("wishlist/", wishlist_view, name="wishlist"),
     path("wishlist/toggle/<int:product_id>/", toggle_wishlist_view, name="wishlist_toggle"),

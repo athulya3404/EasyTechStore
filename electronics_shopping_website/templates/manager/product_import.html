@@ -1,0 +1,693 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Products (Excel/CSV) - EasyTech Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/manager.css' %}">
+</head>
+<body>
+    <div class="manager-wrapper">
+        {% include "manager/_sidebar.html" %}
+
+        <main class="manager-content">
+            <header class="manager-topbar">
+                <div class="topbar-left">
+                    <button class="mobile-toggle" id="mobileSidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">
+                        <i class="fas fa-file-excel" style="color: #10b981;"></i>
+                        Bulk Import Products
+                    </h1>
+                </div>
+                <div class="topbar-right">
+                    <a href="{% url 'manager:products' %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> All Products
+                    </a>
+                </div>
+            </header>
+
+            <div class="manager-container">
+                {% if messages %}
+                    <div class="manager-alert-container">
+                        {% for message in messages %}
+                            <div class="manager-alert manager-alert-{{ message.tags }}">
+                                <span><i class="fas fa-info-circle"></i> {{ message }}</span>
+                                <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:inherit;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px;">
+                    
+                    <!-- Upload Card -->
+                    <div class="manager-card">
+                        <div class="card-top">
+                            <div class="card-top-title">
+                                <i class="fas fa-cloud-arrow-up" style="color: var(--primary);"></i>
+                                Upload Products Spreadsheet
+                            </div>
+                            <span class="badge-pill badge-info" id="fileTypeBadge">Excel (.xlsx) / CSV</span>
+                        </div>
+
+                        <div class="card-body" style="padding: 24px;">
+                            <form id="productImportForm" method="POST" enctype="multipart/form-data">
+                                {% csrf_token %}
+
+                                <div id="importClientAlert" style="display: none; margin-bottom: 18px;" class="manager-alert manager-alert-error">
+                                    <span id="importClientAlertText"><i class="fas fa-exclamation-circle"></i> Error</span>
+                                    <button type="button" onclick="document.getElementById('importClientAlert').style.display='none'" style="background:none;border:none;cursor:pointer;color:inherit;">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+
+                                <div class="form-group mb-4">
+                                    <label class="form-label" for="excel_file">
+                                        Choose Excel (.xlsx) or CSV (.csv) File <span class="required">*</span>
+                                    </label>
+                                    
+                                    <!-- Custom Drag/Drop File Box -->
+                                    <div id="dropZone" style="border: 2px dashed #cbd5e1; border-radius: 12px; padding: 26px 20px; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.2s ease;">
+                                        <input 
+                                            type="file" 
+                                            name="excel_file" 
+                                            id="excel_file" 
+                                            accept=".xlsx, .xls, .csv" 
+                                            required
+                                            style="display: none;"
+                                        >
+                                        <div id="dropZoneContent">
+                                            <div style="width: 54px; height: 54px; margin: 0 auto 12px; background: #eff6ff; color: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                                <i class="fas fa-file-arrow-up"></i>
+                                            </div>
+                                            <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem; margin-bottom: 4px;">
+                                                Click to select or drag & drop spreadsheet
+                                            </div>
+                                            <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                                Supports Microsoft Excel (.xlsx, .xls) and Comma-Separated Values (.csv)
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Selected File Preview -->
+                                        <div id="selectedFileInfo" style="display: none; align-items: center; justify-content: center; gap: 12px; padding: 10px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                                            <i class="fas fa-file-excel" style="color: #10b981; font-size: 1.5rem;"></i>
+                                            <div style="text-align: left;">
+                                                <div id="selectedFileName" style="font-weight: 700; font-size: 0.9rem; color: var(--text-main);">filename.xlsx</div>
+                                                <div id="selectedFileSize" style="font-size: 0.78rem; color: var(--text-muted);">0 KB</div>
+                                            </div>
+                                            <button type="button" id="changeFileBtn" style="margin-left: auto; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 10px; font-size: 0.75rem; font-weight: 600; cursor: pointer; color: var(--text-main);">
+                                                Change
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Real-Time Upload Progress Card -->
+                                <div id="uploadProgressSection" style="display: none; margin: 20px 0; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+                                    
+                                    <!-- Progress Header -->
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                                        <div style="display: flex; align-items: center; gap: 12px;">
+                                            <div id="progressSpinner" style="width: 28px; height: 28px; color: #4f46e5; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                                <i class="fas fa-circle-notch fa-spin"></i>
+                                            </div>
+                                            <div>
+                                                <div id="progressStatusTitle" style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">
+                                                    Preparing file upload...
+                                                </div>
+                                                <div id="progressStatusDetail" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+                                                    Connecting to server...
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Big Percentage & Time Left Display -->
+                                        <div style="text-align: right;">
+                                            <div id="progressPercentageText" style="font-size: 1.5rem; font-weight: 800; color: #4338ca; font-family: monospace; line-height: 1.1;">0%</div>
+                                            <div style="display: flex; gap: 6px; justify-content: flex-end; margin-top: 6px;">
+                                                <!-- Time Left Badge -->
+                                                <span id="timeLeftBadge" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 700; color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 999px;">
+                                                    <i class="fas fa-clock"></i> <span id="timeLeftText">Estimating time left...</span>
+                                                </span>
+                                                <!-- Item Counter Badge -->
+                                                <span id="itemProgressBadge" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 700; color: #4338ca; background: #e0e7ff; border: 1px solid #c7d2fe; padding: 2px 8px; border-radius: 999px;">
+                                                    <i class="fas fa-boxes-stacked"></i> <span id="itemProgressText">0 / 0 Products</span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Progress Bar Track -->
+                                    <div style="width: 100%; height: 16px; background: #e2e8f0; border-radius: 999px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06); position: relative; margin-bottom: 14px;">
+                                        <div id="progressBarFill" style="width: 0%; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #4f46e5 0%, #06b6d4 50%, #10b981 100%); background-size: 30px 30px; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                                    </div>
+
+                                    <!-- Live 3-Stage Progress Stepper -->
+                                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 0.75rem; margin-bottom: 14px;">
+                                        <div id="step1Pill" style="padding: 6px 8px; border-radius: 6px; background: #e0e7ff; color: #3730a3; font-weight: 700; display: flex; align-items: center; gap: 6px; border: 1px solid #c7d2fe;">
+                                            <i id="step1Icon" class="fas fa-arrow-up-from-bracket"></i> 1. File Upload
+                                        </div>
+                                        <div id="step2Pill" style="padding: 6px 8px; border-radius: 6px; background: #f1f5f9; color: #64748b; font-weight: 600; display: flex; align-items: center; gap: 6px; border: 1px solid #e2e8f0;">
+                                            <i id="step2Icon" class="fas fa-list-check"></i> 2. Validation
+                                        </div>
+                                        <div id="step3Pill" style="padding: 6px 8px; border-radius: 6px; background: #f1f5f9; color: #64748b; font-weight: 600; display: flex; align-items: center; gap: 6px; border: 1px solid #e2e8f0;">
+                                            <i id="step3Icon" class="fas fa-image"></i> 3. Each Product Stream
+                                        </div>
+                                    </div>
+
+                                    <!-- Live Product-by-Product Activity Stream -->
+                                    <div id="activityStreamContainer" style="display: none; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-top: 10px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; font-size: 0.75rem; font-weight: 700; color: #475569;">
+                                            <span><i class="fas fa-stream" style="color: #6366f1; margin-right: 4px;"></i> Live Sequential Upload Stream (Item by Item)</span>
+                                            <span id="streamSpeedBadge" style="font-size: 0.7rem; color: #64748b;">Speed: --</span>
+                                        </div>
+                                        <div id="activityLogList" style="max-height: 150px; overflow-y: auto; padding: 6px 8px;">
+                                            <!-- Dynamic items appear here sequentially -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; gap: 14px; align-items: center; margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+                                    <button type="submit" id="submitImportBtn" class="btn btn-primary" style="padding: 11px 24px; display: inline-flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-upload"></i> <span>Upload & Import Products</span>
+                                    </button>
+                                    <a href="{% url 'manager:products' %}" class="btn btn-secondary">
+                                        Cancel
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Instructions & Sample File Download Card -->
+                    <div class="manager-card">
+                        <div class="card-top">
+                            <div class="card-top-title">
+                                <i class="fas fa-circle-question" style="color: #6366f1;"></i>
+                                Spreadsheet Format Guide
+                            </div>
+                        </div>
+
+                        <div class="card-body" style="padding: 24px;">
+                            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">
+                                Download our pre-formatted template with standard electronics gadgets examples.
+                            </p>
+
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+                                <a href="{% url 'manager:product_sample_template' %}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 8px; color: #047857; background: #ecfdf5; border-color: #a7f3d0; font-weight: 700;">
+                                    <i class="fas fa-file-excel"></i> Download Excel Template (.xlsx)
+                                </a>
+                                <a href="{% url 'manager:product_sample_template' %}?format=csv" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 8px; color: #1e40af; background: #eff6ff; border-color: #bfdbfe; font-weight: 700;">
+                                    <i class="fas fa-file-csv"></i> Download CSV Template (.csv)
+                                </a>
+                            </div>
+
+                            <h4 style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin-bottom: 10px;">
+                                Expected Column Headers:
+                            </h4>
+
+                            <div style="background: #f8fafc; border: 1px solid var(--card-border); border-radius: var(--radius-md); overflow-x: auto; font-size: 0.8rem; max-height: 280px;">
+                                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                                    <thead>
+                                        <tr style="background: #e2e8f0; color: #334155;">
+                                            <th style="padding: 8px 10px; border-bottom: 1px solid #cbd5e1;">Column</th>
+                                            <th style="padding: 8px 10px; border-bottom: 1px solid #cbd5e1;">Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td style="padding: 8px 10px; font-weight: 700; border-bottom: 1px solid #f1f5f9;">Product Name *</td>
+                                            <td style="padding: 8px 10px; color: var(--text-muted); border-bottom: 1px solid #f1f5f9;">e.g. HP Pavilion 15, Dell XPS 15 (Required)</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 10px; font-weight: 700; border-bottom: 1px solid #f1f5f9;">Category *</td>
+                                            <td style="padding: 8px 10px; color: var(--text-muted); border-bottom: 1px solid #f1f5f9;">e.g. Laptops, Smartphones (Required)</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 10px; font-weight: 700; border-bottom: 1px solid #f1f5f9;">Brand</td>
+                                            <td style="padding: 8px 10px; color: var(--text-muted); border-bottom: 1px solid #f1f5f9;">e.g. HP, Dell, Apple, Sony, Samsung (Optional)</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 10px; font-weight: 700; border-bottom: 1px solid #f1f5f9;">Price *</td>
+                                            <td style="padding: 8px 10px; color: var(--text-muted); border-bottom: 1px solid #f1f5f9;">Base selling price, e.g. 850.00 (Required)</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 10px; font-weight: 700; border-bottom: 1px solid #f1f5f9;">Discount (%)</td>
+                                            <td style="padding: 8px 10px; color: var(--text-muted); border-bottom: 1px solid #f1f5f9;">Discount percentage (0-100), e.g. 10 (Default: 0)</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 10px; font-weight: 700; border-bottom: 1px solid #f1f5f9;">Stock</td>
+                                            <td style="padding: 8px 10px; color: var(--text-muted); border-bottom: 1px solid #f1f5f9;">Inventory quantity units in stock (Default: 0)</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 10px; font-weight: 700; border-bottom: 1px solid #f1f5f9; color: #047857;">Photo URL</td>
+                                            <td style="padding: 8px 10px; color: var(--text-muted); border-bottom: 1px solid #f1f5f9;">Web photo URL (e.g. <code>https://.../laptop.jpg</code>) or local media path (Optional)</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 10px; font-weight: 700; border-bottom: 1px solid #f1f5f9;">Specifications</td>
+                                            <td style="padding: 8px 10px; color: var(--text-muted); border-bottom: 1px solid #f1f5f9;">Hardware specs: RAM, Processor, Display, Storage</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 10px; font-weight: 700; border-bottom: 1px solid #f1f5f9;">Description</td>
+                                            <td style="padding: 8px 10px; color: var(--text-muted); border-bottom: 1px solid #f1f5f9;">Full product description (Optional)</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 10px; font-weight: 700;">Active</td>
+                                            <td style="padding: 8px 10px; color: var(--text-muted);">Yes or No (Default: Yes)</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <ul style="font-size: 0.8rem; color: var(--text-muted); margin-top: 16px; padding-left: 18px;">
+                                <li style="margin-bottom: 6px;">Products already existing in the store will <strong>NOT</strong> be overwritten; existing product data is safely preserved.</li>
+                                <li style="margin-bottom: 6px;">If a Category or Brand does not exist yet, it will be automatically created.</li>
+                                <li style="margin-bottom: 6px;">Brands will automatically be linked under the specified category (e.g. <strong>HP</strong> under <strong>Laptops</strong>).</li>
+                                <li>Empty rows will be automatically skipped.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{% static 'js/manager.js' %}"></script>
+    <script>
+        (function() {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('excel_file');
+            const dropZoneContent = document.getElementById('dropZoneContent');
+            const selectedFileInfo = document.getElementById('selectedFileInfo');
+            const selectedFileName = document.getElementById('selectedFileName');
+            const selectedFileSize = document.getElementById('selectedFileSize');
+            const changeFileBtn = document.getElementById('changeFileBtn');
+            const fileTypeBadge = document.getElementById('fileTypeBadge');
+            
+            const form = document.getElementById('productImportForm');
+            const submitBtn = document.getElementById('submitImportBtn');
+            const alertBox = document.getElementById('importClientAlert');
+            const alertText = document.getElementById('importClientAlertText');
+
+            const progressSection = document.getElementById('uploadProgressSection');
+            const progressFill = document.getElementById('progressBarFill');
+            const percentageText = document.getElementById('progressPercentageText');
+            const progressTitle = document.getElementById('progressStatusTitle');
+            const progressDetail = document.getElementById('progressStatusDetail');
+            const progressSpinner = document.getElementById('progressSpinner');
+            const timeLeftText = document.getElementById('timeLeftText');
+            const itemProgressText = document.getElementById('itemProgressText');
+            const streamSpeedBadge = document.getElementById('streamSpeedBadge');
+            const activityStreamContainer = document.getElementById('activityStreamContainer');
+            const activityLogList = document.getElementById('activityLogList');
+
+            const step1Pill = document.getElementById('step1Pill');
+            const step2Pill = document.getElementById('step2Pill');
+            const step3Pill = document.getElementById('step3Pill');
+            const step1Icon = document.getElementById('step1Icon');
+            const step2Icon = document.getElementById('step2Icon');
+            const step3Icon = document.getElementById('step3Icon');
+
+            function formatBytes(bytes) {
+                if (!bytes || bytes === 0) return '0 KB';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+            }
+
+            function updateFileDisplay(file) {
+                if (!file) return;
+                selectedFileName.textContent = file.name;
+                selectedFileSize.textContent = formatBytes(file.size);
+                dropZoneContent.style.display = 'none';
+                selectedFileInfo.style.display = 'flex';
+
+                if (file.name.toLowerCase().endsWith('.csv')) {
+                    fileTypeBadge.textContent = 'CSV Spreadsheet';
+                    fileTypeBadge.className = 'badge-pill badge-info';
+                } else {
+                    fileTypeBadge.textContent = 'Excel Spreadsheet';
+                    fileTypeBadge.className = 'badge-pill badge-active';
+                }
+                alertBox.style.display = 'none';
+            }
+
+            // Click zone to open file picker
+            dropZone.addEventListener('click', function(e) {
+                if (e.target !== changeFileBtn && !changeFileBtn.contains(e.target)) {
+                    fileInput.click();
+                }
+            });
+
+            changeFileBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                fileInput.value = '';
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', function() {
+                if (fileInput.files.length > 0) {
+                    updateFileDisplay(fileInput.files[0]);
+                }
+            });
+
+            // Drag and drop events
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.style.borderColor = '#3b82f6';
+                    dropZone.style.background = '#eff6ff';
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.style.borderColor = '#cbd5e1';
+                    dropZone.style.background = '#f8fafc';
+                });
+            });
+
+            dropZone.addEventListener('drop', function(e) {
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    fileInput.files = e.dataTransfer.files;
+                    updateFileDisplay(e.dataTransfer.files[0]);
+                }
+            });
+
+            // Set Pill State Helper
+            function setPillActive(pill, icon, activeIconClass) {
+                pill.style.background = '#e0e7ff';
+                pill.style.color = '#3730a3';
+                pill.style.borderColor = '#c7d2fe';
+                pill.style.fontWeight = '700';
+                icon.className = activeIconClass;
+            }
+
+            function setPillComplete(pill, icon) {
+                pill.style.background = '#ecfdf5';
+                pill.style.color = '#047857';
+                pill.style.borderColor = '#a7f3d0';
+                pill.style.fontWeight = '700';
+                icon.className = 'fas fa-check-circle';
+            }
+
+            // Format seconds into readable countdown string
+            function formatTimeLeft(seconds) {
+                if (seconds <= 0) return 'Few moments left';
+                if (seconds < 60) return `~${seconds}s left`;
+                const m = Math.floor(seconds / 60);
+                const s = seconds % 60;
+                return `~${m}m ${s}s left`;
+            }
+
+            // Sequential Product Upload with Time Left & Live Log Stream
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    alertText.innerHTML = '<i class="fas fa-exclamation-circle"></i> Please choose an Excel or CSV file to upload.';
+                    alertBox.style.display = 'block';
+                    return;
+                }
+
+                const file = fileInput.files[0];
+                const validExtensions = ['.xlsx', '.xls', '.csv'];
+                const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+                if (!validExtensions.includes(fileExt)) {
+                    alertText.innerHTML = '<i class="fas fa-exclamation-circle"></i> Invalid file format. Please upload an Excel (.xlsx, .xls) or CSV (.csv) file.';
+                    alertBox.style.display = 'block';
+                    return;
+                }
+
+                // UI Initialization
+                alertBox.style.display = 'none';
+                progressSection.style.display = 'block';
+                activityStreamContainer.style.display = 'block';
+                activityLogList.innerHTML = '';
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> <span>Uploading...</span>';
+                
+                progressFill.style.width = '0%';
+                progressFill.style.background = 'linear-gradient(90deg, #4f46e5 0%, #06b6d4 50%, #10b981 100%)';
+                percentageText.textContent = '0%';
+                percentageText.style.color = '#4338ca';
+                progressSpinner.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+                progressSpinner.style.color = '#4f46e5';
+                timeLeftText.textContent = 'Estimating time left...';
+                itemProgressText.textContent = '0 / 0 Products';
+                streamSpeedBadge.textContent = 'Speed: --';
+
+                setPillActive(step1Pill, step1Icon, 'fas fa-arrow-up-from-bracket');
+                step2Pill.style.background = '#f1f5f9';
+                step2Pill.style.color = '#64748b';
+                step3Pill.style.background = '#f1f5f9';
+                step3Pill.style.color = '#64748b';
+
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                const parseUrl = "{% url 'manager:product_import_parse' %}";
+                const itemUrl = "{% url 'manager:product_import_item' %}";
+                const redirectUrl = "{% url 'manager:products' %}";
+
+                // Phase 1: Upload file and parse rows
+                progressTitle.textContent = 'Transmitting spreadsheet file...';
+                progressDetail.textContent = 'Sending file to server for parsing';
+
+                let parsedData = null;
+                try {
+                    const formData = new FormData();
+                    formData.append('excel_file', file);
+                    formData.append('csrfmiddlewaretoken', csrfToken);
+
+                    parsedData = await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('POST', parseUrl, true);
+                        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+                        xhr.upload.onprogress = function(event) {
+                            if (event.lengthComputable) {
+                                const pct = Math.min(15, Math.round((event.loaded / event.total) * 15));
+                                percentageText.textContent = pct + '%';
+                                progressFill.style.width = pct + '%';
+                                progressDetail.textContent = `${formatBytes(event.loaded)} of ${formatBytes(event.total)} transferred`;
+                            }
+                        };
+
+                        xhr.onload = function() {
+                            try {
+                                const json = JSON.parse(xhr.responseText);
+                                if (xhr.status >= 200 && xhr.status < 300 && json.success) {
+                                    resolve(json);
+                                } else {
+                                    reject(new Error(json.error || 'Failed to parse spreadsheet file'));
+                                }
+                            } catch (err) {
+                                reject(new Error('Invalid response from server during file parsing'));
+                            }
+                        };
+
+                        xhr.onerror = function() {
+                            reject(new Error('Network error during file upload'));
+                        };
+
+                        xhr.send(formData);
+                    });
+                } catch (err) {
+                    // Upload/parse failed
+                    handleFatalError(err.message);
+                    return;
+                }
+
+                const items = parsedData.items || [];
+                const totalItems = items.length;
+                if (totalItems === 0) {
+                    handleFatalError('No valid product records found in the uploaded file.');
+                    return;
+                }
+
+                // Phase 2: File upload & validation complete
+                setPillComplete(step1Pill, step1Icon);
+                setPillComplete(step2Pill, step2Icon);
+                setPillActive(step3Pill, step3Icon, 'fas fa-boxes-stacked fa-pulse');
+
+                percentageText.textContent = '15%';
+                progressFill.style.width = '15%';
+                progressTitle.textContent = `Found ${totalItems} products. Starting sequential upload...`;
+                progressDetail.textContent = 'Uploading each product and downloading image assets one by one';
+                itemProgressText.textContent = `0 / ${totalItems} Products`;
+
+                // Phase 3: Sequential Product-by-Product Processing
+                let createdCount = 0;
+                let alreadyExistsCount = 0;
+                let errorCount = 0;
+                const startTime = Date.now();
+
+                for (let i = 0; i < totalItems; i++) {
+                    const item = items[i];
+                    const itemNumber = i + 1;
+
+                    // Update header status
+                    progressTitle.textContent = `Uploading Product ${itemNumber} of ${totalItems}: "${item.name}"`;
+                    progressDetail.textContent = `Category: ${item.category} ${item.brand ? '| Brand: ' + item.brand : ''}`;
+                    itemProgressText.textContent = `${itemNumber} / ${totalItems} Products`;
+
+                    // Insert in-progress log row in live activity stream
+                    const logRow = document.createElement('div');
+                    logRow.id = `log_item_${i}`;
+                    logRow.style.cssText = 'display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-bottom: 1px solid #f8fafc; font-size: 0.8rem;';
+                    logRow.innerHTML = `
+                        <i class="fas fa-circle-notch fa-spin" style="color: #4f46e5; min-width: 16px;"></i>
+                        <span style="font-weight: 700; color: var(--text-main);">${escapeHtml(item.name)}</span>
+                        <span style="color: #64748b; font-size: 0.75rem;">(${escapeHtml(item.category)})</span>
+                        <span style="margin-left: auto; font-size: 0.72rem; color: #4338ca; font-weight: 600;">Saving...</span>
+                    `;
+                    activityLogList.appendChild(logRow);
+                    activityLogList.scrollTop = activityLogList.scrollHeight;
+
+                    // Send single product
+                    try {
+                        const itemResponse = await fetch(itemUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrfToken,
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify(item)
+                        });
+
+                        const itemResult = await itemResponse.json();
+
+                        if (itemResponse.ok && itemResult.success) {
+                            const res = itemResult.result;
+                            if (res.status === 'created') {
+                                createdCount++;
+                                logRow.innerHTML = `
+                                    <i class="fas fa-circle-check" style="color: #10b981; min-width: 16px;"></i>
+                                    <span style="font-weight: 700; color: var(--text-main);">${escapeHtml(item.name)}</span>
+                                    <span style="color: #64748b; font-size: 0.75rem;">(${escapeHtml(item.category)})</span>
+                                    <span style="margin-left: auto; font-size: 0.72rem; color: #047857; background: #ecfdf5; padding: 2px 6px; border-radius: 4px; font-weight: 700;">✓ Created</span>
+                                `;
+                            } else if (res.status === 'updated') {
+                                alreadyExistsCount++;
+                                logRow.innerHTML = `
+                                    <i class="fas fa-circle-check" style="color: #06b6d4; min-width: 16px;"></i>
+                                    <span style="font-weight: 700; color: var(--text-main);">${escapeHtml(item.name)}</span>
+                                    <span style="color: #64748b; font-size: 0.75rem;">(${escapeHtml(item.category)})</span>
+                                    <span style="margin-left: auto; font-size: 0.72rem; color: #0891b2; background: #ecfeff; padding: 2px 6px; border-radius: 4px; font-weight: 700;">✓ Photo Attached</span>
+                                `;
+                            } else {
+                                alreadyExistsCount++;
+                                logRow.innerHTML = `
+                                    <i class="fas fa-circle-info" style="color: #3b82f6; min-width: 16px;"></i>
+                                    <span style="font-weight: 700; color: var(--text-main);">${escapeHtml(item.name)}</span>
+                                    <span style="color: #64748b; font-size: 0.75rem;">(${escapeHtml(item.category)})</span>
+                                    <span style="margin-left: auto; font-size: 0.72rem; color: #1e40af; background: #eff6ff; padding: 2px 6px; border-radius: 4px; font-weight: 700;">• Exists (Preserved)</span>
+                                `;
+                            }
+                        } else {
+                            errorCount++;
+                            const errMsg = (itemResult && itemResult.error) ? itemResult.error : 'Processing error';
+                            logRow.innerHTML = `
+                                <i class="fas fa-circle-exclamation" style="color: #f59e0b; min-width: 16px;"></i>
+                                <span style="font-weight: 700; color: var(--text-main);">${escapeHtml(item.name)}</span>
+                                <span style="color: #ef4444; font-size: 0.75rem;">(${escapeHtml(errMsg)})</span>
+                                <span style="margin-left: auto; font-size: 0.72rem; color: #b45309; background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 700;">⚠ Error</span>
+                            `;
+                        }
+                    } catch (err) {
+                        errorCount++;
+                        logRow.innerHTML = `
+                            <i class="fas fa-circle-exclamation" style="color: #f59e0b; min-width: 16px;"></i>
+                            <span style="font-weight: 700; color: var(--text-main);">${escapeHtml(item.name)}</span>
+                            <span style="margin-left: auto; font-size: 0.72rem; color: #b45309; background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 700;">⚠ Network Issue</span>
+                        `;
+                    }
+
+                    // Update Percentage & Progress Bar
+                    const currentPct = Math.round(15 + (itemNumber / totalItems) * 85);
+                    percentageText.textContent = `${currentPct}%`;
+                    progressFill.style.width = `${currentPct}%`;
+
+                    // Calculate Time Left & Speed
+                    const elapsedSec = (Date.now() - startTime) / 1000;
+                    const avgSecPerItem = elapsedSec / itemNumber;
+                    const itemsRemaining = totalItems - itemNumber;
+                    const secondsLeft = Math.max(0, Math.ceil(itemsRemaining * avgSecPerItem));
+
+                    if (itemsRemaining > 0) {
+                        timeLeftText.textContent = formatTimeLeft(secondsLeft);
+                        streamSpeedBadge.textContent = `Speed: ${avgSecPerItem.toFixed(1)}s / item`;
+                    } else {
+                        timeLeftText.textContent = `Completed in ${elapsedSec.toFixed(1)}s`;
+                    }
+                }
+
+                // All Products Completed!
+                percentageText.textContent = '100%';
+                progressFill.style.width = '100%';
+                progressFill.style.background = '#10b981';
+
+                setPillComplete(step1Pill, step1Icon);
+                setPillComplete(step2Pill, step2Icon);
+                setPillComplete(step3Pill, step3Icon);
+
+                progressSpinner.innerHTML = '<i class="fas fa-check-circle" style="color: #10b981; font-size: 1.3rem;"></i>';
+                progressTitle.textContent = `All ${totalItems} Products Processed!`;
+                
+                let finishMsg = `Created ${createdCount} new products.`;
+                if (alreadyExistsCount > 0) {
+                    finishMsg += ` ${alreadyExistsCount} existing products preserved without being overwritten.`;
+                }
+                if (errorCount > 0) {
+                    finishMsg += ` (${errorCount} items skipped due to errors)`;
+                }
+                progressDetail.textContent = `${finishMsg} Redirecting to catalog...`;
+
+                setTimeout(function() {
+                    window.location.href = redirectUrl;
+                }, 900);
+
+            });
+
+            function handleFatalError(message) {
+                progressFill.style.background = '#ef4444';
+                percentageText.textContent = '!';
+                percentageText.style.color = '#ef4444';
+                progressSpinner.innerHTML = '<i class="fas fa-circle-xmark" style="color: #ef4444; font-size: 1.3rem;"></i>';
+                progressTitle.textContent = 'Import Failed';
+                progressDetail.textContent = message;
+
+                alertText.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${escapeHtml(message)}`;
+                alertBox.style.display = 'block';
+
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-rotate-right"></i> <span>Retry Upload</span>';
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+            }
+
+        })();
+    </script>
+</body>
+</html>

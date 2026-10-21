@@ -185,6 +185,9 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Microsoft Office temporary files
+~$*
+
 
 ### macOS template
 # General

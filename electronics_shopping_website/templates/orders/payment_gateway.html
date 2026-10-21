@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Payment Gateway (UPI, Card, etc.) - Order #{{ order.id }}{% endblock title %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+      
+      <!-- Trust & Security Banner -->
+      <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+        <div class="d-flex align-items-center gap-2">
+          <div class="bg-primary text-white p-2 rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-shield-lock-fill" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M8 0c-.69 0-1.843.265-2.928.56-1.11.3-2.229.655-2.887.87a1.54 1.54 0 0 0-1.044 1.262c-.596 4.477.787 7.795 2.464 9.99a11.8 11.8 0 0 0 4.395 3.32 1.5 1.5 0 0 0 1.96 0 11.8 11.8 0 0 0 4.395-3.32c1.677-2.195 3.06-5.513 2.464-9.99A1.54 1.54 0 0 0 13.815 1.43c-.658-.215-1.777-.57-2.887-.87C9.843.265 8.69 0 8 0m0 5a1.5 1.5 0 0 1 1.5 1.5v.5h.5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h.5v-.5A1.5 1.5 0 0 1 8 5m.5 2v-.5a.5.5 0 0 0-1 0V7z"/>
+            </svg>
+          </div>
+          <div>
+            <h5 class="fw-bold mb-0 text-dark">Payment Gateway <span class="badge bg-primary text-white rounded-pill small ms-1" style="font-size: 0.75rem;">(UPI, Card, etc.)</span></h5>
+            <small class="text-muted">EasyTech Secure Gateway</small>
+          </div>
+        </div>
+        <div class="text-end">
+          <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5 rounded-pill fw-semibold">
+            <i class="bi bi-shield-lock-fill"></i> Secure Payment
+          </span>
+        </div>
+      </div>
+
+      <!-- Order Amount & Item Overview Card -->
+      <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+        <div class="card-body p-4 text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <span class="text-white-50 text-uppercase fw-semibold small">Order Reference</span>
+              <h4 class="fw-bold mb-1 text-white">#{{ order.id }}</h4>
+              <small class="text-white-50">{{ order.items.count }} item{{ order.items.count|pluralize }} &bull; Deliver to {{ order.shipping_address|truncatechars:35 }}</small>
+            </div>
+            <div class="text-end">
+              <span class="text-white-50 text-uppercase fw-semibold small">Total Payable</span>
+              <h2 class="fw-bold mb-0 text-success" style="font-size: 2.2rem;">₹{{ order.total_amount|floatformat:2 }}</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% if error_message %}
+      <div class="alert alert-danger rounded-4 mb-4 shadow-sm" role="alert">
+        <div class="d-flex align-items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-exclamation-triangle-fill flex-shrink-0" viewBox="0 0 16 16">
+            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+          </svg>
+          <div>
+            <span class="fw-semibold">{{ error_message }}</span>
+            <div class="small opacity-75 mt-1">Your order is held for 10 minutes. Please select another payment option below.</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Error Alert Box with Retry Information -->
+      <div id="paymentAlert" class="alert alert-danger rounded-4 d-none mb-4 shadow-sm" role="alert">
+        <div class="d-flex align-items-start justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-exclamation-triangle-fill flex-shrink-0" viewBox="0 0 16 16">
+              <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+            </svg>
+            <div>
+              <span id="paymentAlertText" class="fw-semibold">Payment transaction failed. Please retry.</span>
+              <div class="small opacity-75 mt-1" id="paymentAlertSubtext">Your order is reserved for 10 minutes. Select another payment method below to complete your checkout.</div>
+            </div>
+          </div>
+          <a href="{% url 'cart:cart_detail' %}" class="btn btn-outline-danger btn-sm rounded-pill ms-2 text-nowrap">
+            Return to Cart
+          </a>
+        </div>
+      </div>
+
+      <!-- Main Payment Card -->
+      <form method="POST" action="{% url 'orders:payment_gateway' order.id %}" id="gatewayForm">
+        {% csrf_token %}
+        <div class="card border-0 shadow rounded-4 overflow-hidden bg-white">
+          <!-- Payment Mode Tabs -->
+          <div class="card-header bg-light border-0 p-3">
+            <ul class="nav nav-pills nav-fill gap-2" id="paymentTabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active rounded-pill fw-semibold py-2.5" id="card-tab" data-bs-toggle="tab" data-bs-target="#card-pane" type="button" role="tab">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-credit-card me-1.5" viewBox="0 0 16 16">
+                    <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1zm13 4H1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1z"/>
+                    <path d="M2 10a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/>
+                  </svg>
+                  Credit / Debit Card
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill fw-semibold py-2.5" id="upi-tab" data-bs-toggle="tab" data-bs-target="#upi-pane" type="button" role="tab">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-qr-code me-1.5" viewBox="0 0 16 16">
+                    <path d="M2 2h2v2H2z"/>
+                    <path d="M6 0v6H0V0zM5 1H1v4h4zM4 12H2v2h2z"/>
+                    <path d="M6 10v6H0v-6zm-5 1v4h4v-4zm11-9h2v2h-2z"/>
+                    <path d="M10 0v6h6V0zm5 1h-4v4h4zM8 1V0h1v2H8v2H7V1zm0 5V4h1v2zM6 8V7h1V6h1v2h1V7h5v1h-4v1H7V8zm0 0v1H2V8H1v1H0V7h3v1zm10 1h-1V7h1zm-1 0h-1v2h2v-1h-1zm-4 0h2v1h-2zm2 3v-1h-1v1h-1v1H9v1h3v-2zm0 0h3v1h-2v1h-1zm-4-1v1h1v-2H7v1z"/>
+                    <path d="M7 12h1v3h4v1H7zm9 2v2h-3v-1h2v-1z"/>
+                  </svg>
+                  UPI QR & VPA
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill fw-semibold py-2.5" id="netbanking-tab" data-bs-toggle="tab" data-bs-target="#netbanking-pane" type="button" role="tab">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-bank me-1.5" viewBox="0 0 16 16">
+                    <path d="m8 0 6.61 3h.89a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H15v7a.5.5 0 0 1 .485.38l.5 2a.498.498 0 0 1-.485.62H.5a.498.498 0 0 1-.485-.62l.5-2A.5.5 0 0 1 1 13V6H.5a.5.5 0 0 1-.5-.5v-2A.5.5 0 0 1 .5 3h.89zM3.777 3h8.447L8 1zM2 6v7h1V6zm2 0v7h2.5V6zm3.5 0v7h1V6zm2 0v7H12V6zm3 0v7h1V6zM1.102 14h13.796l-.25-1H1.352z"/>
+                  </svg>
+                  NetBanking
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="card-body p-4 p-md-5">
+            <div class="tab-content" id="paymentTabsContent">
+              
+              <!-- TAB 1: CARD PAYMENT -->
+              <div class="tab-pane fade show active" id="card-pane" role="tabpanel">
+                <!-- Visual Card Preview -->
+                <div class="card p-3 mb-4 rounded-4 text-white shadow-sm" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%); min-height: 170px;">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="small fw-semibold opacity-75">Debit / Credit Card</span>
+                    <span class="fw-bold tracking-wider fs-6">EasyTech Pay</span>
+                  </div>
+                  <div class="fs-4 fw-bold mb-3 tracking-widest" id="cardPreviewNumber">•••• •••• •••• 4242</div>
+                  <div class="d-flex justify-content-between align-items-end">
+                    <div>
+                      <small class="text-white-50 text-uppercase d-block" style="font-size: 0.7rem;">Cardholder</small>
+                      <strong class="text-uppercase" id="cardPreviewName">{{ request.user.name|default:"CARDHOLDER NAME" }}</strong>
+                    </div>
+                    <div class="text-end">
+                      <small class="text-white-50 text-uppercase d-block" style="font-size: 0.7rem;">Expires</small>
+                      <strong id="cardPreviewExpiry">12/28</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card Form Inputs -->
+                <div class="mb-3">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label class="form-label small fw-semibold mb-0">Card Number</label>
+                    <div class="btn-group btn-group-sm">
+                      <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" id="fillVisaBtn" style="font-size: 0.75rem;">Sample Visa</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" id="fillMasterBtn" style="font-size: 0.75rem;">Sample MasterCard</button>
+                    </div>
+                  </div>
+                  <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="bi bi-credit-card-2-front"></i></span>
+                    <input type="text" id="cardNumInput" class="form-control" placeholder="4111 2222 3333 4242" maxlength="19" value="4111 2222 3333 4242">
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold">Cardholder Name</label>
+                  <input type="text" id="cardNameInput" class="form-control" placeholder="Full Name as printed on card" value="{{ request.user.name|default:'Demo Customer' }}">
+                </div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-6">
+                    <label class="form-label small fw-semibold">Expiry Date</label>
+                    <input type="text" id="cardExpiryInput" class="form-control" placeholder="MM/YY" maxlength="5" value="12/28">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label small fw-semibold">CVV / Security Code</label>
+                    <input type="password" id="cardCvvInput" class="form-control" placeholder="•••" maxlength="4" value="789">
+                  </div>
+                </div>
+              </div>
+
+              <!-- TAB 2: UPI QR CODE -->
+              <div class="tab-pane fade" id="upi-pane" role="tabpanel">
+                <div class="text-center py-2">
+                  <div class="border rounded-4 p-3 d-inline-block bg-light shadow-sm mb-3 position-relative overflow-hidden" style="max-width: 200px;">
+                    <!-- Mock QR code pattern -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 16 16" fill="#1e293b">
+                      <path d="M2 2h2v2H2zM1 1h4v4H1zm6 0h2v1H7zm3 0h1v2h-1zm2 0h3v3h-3zm-1 2h1v1h-1zm3 0h1v1h-1zM2 6h1v1H2zm3 0h2v1H5zm6 0h1v2h-1zm2 0h2v1h-2zM0 8h2v2H0zm3 0h1v1H3zm2 0h1v1H5zm3 0h1v1H8zm2 0h2v1h-2zm3 0h2v1h-2zM1 10h1v1H1zm3 0h2v1H4zm3 0h1v2H7zm4 0h1v1h-1zm2 0h1v1h-1zM2 12h2v2H2zm-1-1h4v4H1zm8 1h1v1H9zm2 0h1v1h-1zm2 0h2v2h-2zm-3 2h2v1h-2zm3 0h1v1h-1zM0 15h1v1H0zm5 0h1v1H5zm6 0h2v1h-2z"/>
+                    </svg>
+                    <div class="small fw-semibold text-primary mt-1">Scan with GPay / PhonePe / Paytm</div>
+                  </div>
+                  <p class="text-muted small mb-3">Or enter your UPI Virtual Private Address (VPA):</p>
+                  <div class="input-group max-w-sm mx-auto" style="max-width: 360px;">
+                    <input type="text" id="upiVpaInput" class="form-control" placeholder="customer@okhdfcbank" value="customer@upi">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('upiVpaInput').value='customer@upi'">Fill Sample UPI</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TAB 3: NETBANKING -->
+              <div class="tab-pane fade" id="netbanking-pane" role="tabpanel">
+                <label class="form-label small fw-semibold mb-2">Select Popular Bank</label>
+                <div class="row g-2 mb-3">
+                  <div class="col-6">
+                    <input type="radio" class="btn-check" name="netBankSelect" id="bankHdfc" value="HDFC Bank" checked>
+                    <label class="btn btn-outline-secondary w-100 text-start py-2.5 rounded-3 d-flex align-items-center gap-2" for="bankHdfc">
+                      <span class="badge bg-primary">HDFC</span> HDFC Bank
+                    </label>
+                  </div>
+                  <div class="col-6">
+                    <input type="radio" class="btn-check" name="netBankSelect" id="bankSbi" value="SBI">
+                    <label class="btn btn-outline-secondary w-100 text-start py-2.5 rounded-3 d-flex align-items-center gap-2" for="bankSbi">
+                      <span class="badge bg-info text-dark">SBI</span> State Bank of India
+                    </label>
+                  </div>
+                  <div class="col-6">
+                    <input type="radio" class="btn-check" name="netBankSelect" id="bankIcici" value="ICICI Bank">
+                    <label class="btn btn-outline-secondary w-100 text-start py-2.5 rounded-3 d-flex align-items-center gap-2" for="bankIcici">
+                      <span class="badge bg-danger">ICICI</span> ICICI Bank
+                    </label>
+                  </div>
+                  <div class="col-6">
+                    <input type="radio" class="btn-check" name="netBankSelect" id="bankAxis" value="Axis Bank">
+                    <label class="btn btn-outline-secondary w-100 text-start py-2.5 rounded-3 d-flex align-items-center gap-2" for="bankAxis">
+                      <span class="badge bg-secondary">AXIS</span> Axis Bank
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hidden payment verification controls -->
+            <div class="d-none" style="display: none !important;" aria-hidden="true">
+              <input type="radio" name="simulationOutcome" id="outcomeSuccess" value="success" checked>
+              <input type="radio" name="simulationOutcome" id="outcomeFail" value="failed">
+            </div>
+
+            <!-- PAY NOW ACTION BUTTON -->
+            <button type="button" id="payNowBtn" class="btn btn-primary btn-lg w-100 py-3 rounded-pill fw-bold shadow">
+              Authorize & Pay ₹{{ order.total_amount|floatformat:2 }}
+            </button>
+
+            <!-- Exit / Cancellation Options -->
+            <div class="text-center mt-3">
+              <button type="button" class="btn btn-link text-muted small text-decoration-none" data-bs-toggle="modal" data-bs-target="#paymentExitModal">
+                <i class="bi bi-x-circle me-1"></i> Exit or Cancel Payment
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<!-- Exit / Cancel Payment Confirmation Modal -->
+<div class="modal fade" id="paymentExitModal" tabindex="-1" aria-labelledby="paymentExitModalLabel" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold text-dark" id="paymentExitModalLabel">
+          <i class="bi bi-shield-exclamation text-warning me-2"></i>Exit Payment Session?
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body py-3 text-start">
+        <p class="text-muted mb-3">
+          You have an active payment session for <strong>Order #{{ order.id }}</strong> (₹{{ order.total_amount|floatformat:2 }}).
+        </p>
+        <div class="p-3 bg-light rounded-3 mb-3 small">
+          <div class="mb-2">
+            <strong class="text-danger d-block mb-1"><i class="bi bi-x-circle me-1"></i>Cancel Order:</strong>
+            Cancels Order #{{ order.id }} immediately, restores all reserved items to inventory, and moves this order to the <strong>Cancelled List</strong>.
+          </div>
+          <div>
+            <strong class="text-secondary d-block mb-1"><i class="bi bi-clock-history me-1"></i>10-Minute Timeout Policy:</strong>
+            If payment is not completed within <strong>10 minutes</strong>, this unpaid order will be automatically deleted and reserved items returned to inventory.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0 d-flex flex-column gap-2">
+        <form method="POST" action="{% url 'orders:cancel_order' order.id %}" class="w-100 m-0">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger w-100 fw-bold py-2 rounded-pill shadow-sm">
+            <i class="bi bi-trash3 me-1"></i> Cancel Order & Restore Inventory
+          </button>
+        </form>
+        <button type="button" class="btn btn-primary w-100 fw-bold py-2 rounded-pill shadow-sm" data-bs-dismiss="modal">
+          ← Stay and Continue Payment
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dynamic Payment Processing Overlay Modal -->
+<div class="modal fade" id="paymentProcessModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow text-center p-4">
+      <div class="spinner-border text-primary mx-auto mb-3" style="width: 3.5rem; height: 3.5rem;" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <h5 class="fw-bold mb-1" id="processTitle">Connecting to Payment Gateway...</h5>
+      <p class="text-muted small mb-0" id="processSubtitle">Please do not refresh or close this window.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const payBtn = document.getElementById("payNowBtn");
+  const alertBox = document.getElementById("paymentAlert");
+  const alertText = document.getElementById("paymentAlertText");
+  const cardNumInput = document.getElementById("cardNumInput");
+  const cardNameInput = document.getElementById("cardNameInput");
+  const cardExpiryInput = document.getElementById("cardExpiryInput");
+  const fillVisaBtn = document.getElementById("fillVisaBtn");
+  const fillMasterBtn = document.getElementById("fillMasterBtn");
+
+  function showPaymentExitModal() {
+    const exitModalEl = document.getElementById("paymentExitModal");
+    if (exitModalEl) {
+      const exitModal = bootstrap.Modal.getInstance(exitModalEl) || new bootstrap.Modal(exitModalEl);
+      exitModal.show();
+    }
+  }
+
+  // 1. Trap Browser Back Navigation via HTML5 History API
+  history.pushState(null, document.title, location.href);
+  window.addEventListener("popstate", function(event) {
+    history.pushState(null, document.title, location.href);
+    showPaymentExitModal();
+  });
+
+  // 2. Disable Alt + Left Arrow and Backspace navigation shortcuts
+  window.addEventListener("keydown", function(e) {
+    // Disable Alt + ArrowLeft
+    if (e.altKey && (e.key === "ArrowLeft" || e.keyCode === 37)) {
+      e.preventDefault();
+      e.stopPropagation();
+      showPaymentExitModal();
+      return false;
+    }
+    // Disable Backspace outside of form inputs
+    if (e.key === "Backspace" || e.keyCode === 8) {
+      const activeTag = (document.activeElement || {}).tagName;
+      if (activeTag !== "INPUT" && activeTag !== "TEXTAREA") {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    }
+  }, true);
+
+  // Dynamic Card Preview Listeners
+  if (cardNumInput) {
+    cardNumInput.addEventListener("input", function(e) {
+      document.getElementById("cardPreviewNumber").textContent = e.target.value || "•••• •••• •••• 4242";
+    });
+  }
+  if (cardNameInput) {
+    cardNameInput.addEventListener("input", function(e) {
+      document.getElementById("cardPreviewName").textContent = e.target.value.toUpperCase() || "CARDHOLDER NAME";
+    });
+  }
+  if (cardExpiryInput) {
+    cardExpiryInput.addEventListener("input", function(e) {
+      document.getElementById("cardPreviewExpiry").textContent = e.target.value || "12/28";
+    });
+  }
+  if (fillVisaBtn) {
+    fillVisaBtn.addEventListener("click", function() {
+      cardNumInput.value = "4111 2222 3333 4242";
+      cardNameInput.value = "Visa Test Customer";
+      cardExpiryInput.value = "12/28";
+      document.getElementById("cardPreviewNumber").textContent = "4111 2222 3333 4242";
+      document.getElementById("cardPreviewName").textContent = "VISA TEST CUSTOMER";
+      document.getElementById("cardPreviewExpiry").textContent = "12/28";
+    });
+  }
+  if (fillMasterBtn) {
+    fillMasterBtn.addEventListener("click", function() {
+      cardNumInput.value = "5500 0000 0000 4444";
+      cardNameInput.value = "MasterCard Test Customer";
+      cardExpiryInput.value = "10/29";
+      document.getElementById("cardPreviewNumber").textContent = "5500 0000 0000 4444";
+      document.getElementById("cardPreviewName").textContent = "MASTERCARD TEST CUSTOMER";
+      document.getElementById("cardPreviewExpiry").textContent = "10/29";
+    });
+  }
+
+  // Handle Payment Submit with Idempotency and Anti-Double-Click Guard
+  payBtn.addEventListener("click", async function() {
+    if (payBtn.disabled) return;
+    payBtn.disabled = true;
+    const originalBtnContent = payBtn.innerHTML;
+    payBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Securing Transaction...';
+
+    alertBox.classList.add("d-none");
+    
+    // Determine selected payment method
+    let paymentMethod = "Card";
+    const activeTab = document.querySelector("#paymentTabs .nav-link.active");
+    if (activeTab && activeTab.id === "upi-tab") {
+      paymentMethod = "UPI";
+    } else if (activeTab && activeTab.id === "netbanking-tab") {
+      const selectedBank = document.querySelector('input[name="netBankSelect"]:checked');
+      paymentMethod = selectedBank ? `NetBanking (${selectedBank.value})` : "NetBanking";
+    }
+
+    const outcomeRadio = document.querySelector('input[name="simulationOutcome"]:checked');
+    const simulateOutcome = outcomeRadio ? outcomeRadio.value : "success";
+
+    // Generate unique client idempotency key to prevent double charging
+    const idempotencyKey = "PAY-" + {{ order.id }} + "-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9);
+
+    // Show processing modal
+    const processModal = new bootstrap.Modal(document.getElementById("paymentProcessModal"));
+    processModal.show();
+
+    const titleEl = document.getElementById("processTitle");
+    const subEl = document.getElementById("processSubtitle");
+
+    titleEl.textContent = "Connecting to Payment Gateway...";
+    subEl.textContent = "Securing transaction tunnel...";
+
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    const csrfToken = (csrfMeta ? csrfMeta.getAttribute("content") : "") || 
+                      (document.querySelector('[name="csrfmiddlewaretoken"]') ? document.querySelector('[name="csrfmiddlewaretoken"]').value : "");
+
+    try {
+      await new Promise(r => setTimeout(r, 600));
+      titleEl.textContent = "Processing Transaction...";
+      subEl.textContent = "Verifying with payment network...";
+
+      const response = await fetch("/api/payments/verify/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+          "X-Idempotency-Key": idempotencyKey
+        },
+        body: JSON.stringify({
+          order_id: {{ order.id }},
+          payment_method: paymentMethod,
+          simulate_status: simulateOutcome,
+          idempotency_key: idempotencyKey
+        })
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok && data.success) {
+        titleEl.textContent = "Payment Verified!";
+        subEl.textContent = "Redirecting to your order confirmation...";
+        await new Promise(r => setTimeout(r, 500));
+        processModal.hide();
+        window.location.replace(data.redirect_url || "/orders/confirmation/{{ order.id }}/");
+      } else {
+        processModal.hide();
+        payBtn.disabled = false;
+        payBtn.innerHTML = originalBtnContent;
+        alertText.textContent = data.error || "Payment was declined by issuing network. Please verify your details and try again.";
+        const subtextEl = document.getElementById("paymentAlertSubtext");
+        if (subtextEl) {
+          subtextEl.textContent = data.can_retry 
+            ? "Your order remains reserved. Select another payment method or enter alternate card/UPI details below." 
+            : "Reserved items have been released.";
+        }
+        alertBox.classList.remove("d-none");
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } catch(err) {
+      processModal.hide();
+      payBtn.disabled = false;
+      payBtn.innerHTML = originalBtnContent;
+      alertText.textContent = "Network error while connecting to payment gateway. Please try again.";
+      alertBox.classList.remove("d-none");
+    }
+  });
+});
+</script>
+{% endblock content %}

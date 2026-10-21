@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tax Invoice #{{ order.id }} - EasyTech Store</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css">
+  <style>
+    body { background: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .invoice-card { max-width: 800px; margin: 40px auto; background: #fff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    @media print {
+      body { background: #fff; }
+      .invoice-card { box-shadow: none; padding: 0; margin: 0; max-width: 100%; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="invoice-card">
+    
+    <!-- Action Bar (No Print) -->
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print border-bottom pb-3">
+      <a href="{% url 'orders:my_orders' %}" class="btn btn-outline-secondary btn-sm">&larr; Back to My Orders</a>
+      <div class="d-flex gap-2">
+        <a href="{% url 'orders:download_invoice' order.id %}?format=pdf" class="btn btn-success fw-bold shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down me-1" viewBox="0 0 16 16">
+            <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293z"/>
+            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+          </svg>
+          Download PDF Invoice
+        </a>
+        <button onclick="window.print()" class="btn btn-primary fw-bold shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer me-1" viewBox="0 0 16 16">
+            <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+            <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+          </svg>
+          Print Invoice
+        </button>
+      </div>
+    </div>
+
+    <!-- Invoice Header -->
+    <div class="row align-items-center mb-4">
+      <div class="col-6">
+        <h2 class="fw-bold text-primary mb-0">EasyTech Store</h2>
+        <p class="text-muted small mb-0">Official Electronics Tax Invoice</p>
+      </div>
+      <div class="col-6 text-end">
+        <h4 class="fw-bold text-dark mb-0">INVOICE #{{ order.id }}</h4>
+        <small class="text-muted">Date: {{ order.created_at|date:"F d, Y - H:i" }}</small>
+      </div>
+    </div>
+
+    <hr class="my-4">
+
+    <!-- Seller and Buyer Information -->
+    <div class="row mb-4">
+      <div class="col-6">
+        <h6 class="text-muted text-uppercase fw-bold small">Sold By:</h6>
+        <p class="mb-0 fw-bold">EasyTech Electronics Ltd.</p>
+        <p class="text-muted small mb-0">Tech Hub Cyber Park, Info City</p>
+        <p class="text-muted small mb-0">GSTIN: 32AABCU9603R1ZM</p>
+        <p class="text-muted small">support@easytechstore.com</p>
+      </div>
+      <div class="col-6 text-end">
+        <h6 class="text-muted text-uppercase fw-bold small">Billed & Shipped To:</h6>
+        <p class="mb-0 fw-bold">{{ order.recipient_name|default:order.user.name|default:order.user.email }}</p>
+        {% if order.street_address and order.city %}
+          <p class="text-muted small mb-0">{{ order.street_address }}</p>
+          <p class="text-muted small mb-0">{{ order.city }}, {{ order.state }} - {{ order.postal_code }}</p>
+        {% else %}
+          <p class="text-muted small mb-0" style="white-space: pre-line;">{{ order.shipping_address }}</p>
+        {% endif %}
+        {% if order.recipient_phone %}<p class="text-muted small mb-0">Phone: {{ order.recipient_phone }}</p>{% endif %}
+        <p class="text-muted small">{{ order.user.email }}</p>
+      </div>
+    </div>
+
+    <!-- Order Items Table -->
+    <div class="table-responsive mb-4">
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 5%;">#</th>
+            <th style="width: 50%;">Item Description</th>
+            <th class="text-center" style="width: 15%;">Unit Price</th>
+            <th class="text-center" style="width: 10%;">Qty</th>
+            <th class="text-end" style="width: 20%;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in order.items.all %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>
+                <strong>{{ item.product.name }}</strong>
+                {% if item.product.category %}
+                  <div class="text-muted small">{{ item.product.category.name }}</div>
+                {% endif %}
+              </td>
+              <td class="text-center">₹{{ item.price_at_purchase|floatformat:2 }}</td>
+              <td class="text-center">{{ item.quantity }}</td>
+              <td class="text-end fw-semibold">₹{{ item.get_subtotal|floatformat:2 }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Invoice Summary -->
+    <div class="row justify-content-end mb-4">
+      <div class="col-md-6">
+        <div class="card bg-light border-0 p-3 rounded-3">
+          <div class="d-flex justify-content-between mb-2">
+            <span>Subtotal:</span>
+            <span>₹{{ order.total_amount|floatformat:2 }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Estimated GST / Tax (Included):</span>
+            <span>₹0.00</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Shipping & Handling:</span>
+            <span class="text-success fw-bold">FREE</span>
+          </div>
+          <hr class="my-2">
+          <div class="d-flex justify-content-between fs-5 fw-bold text-dark">
+            <span>Total Paid:</span>
+            <span class="text-primary">₹{{ order.total_amount|floatformat:2 }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment & Transaction Details -->
+    <div class="border p-3 rounded-3 mb-4 bg-white">
+      <div class="row small">
+        <div class="col-md-4">
+          <strong>Order Status:</strong>
+          <span class="badge {% if order.status == 'Paid' or order.status == 'Delivered' %}bg-success{% elif order.status == 'Cancelled' %}bg-danger{% else %}bg-warning text-dark{% endif %} ms-1">
+            {{ order.status }}
+          </span>
+        </div>
+        <div class="col-md-4">
+          <strong>Payment Method:</strong>
+          <span class="text-muted ms-1">{% if order.payment.payment_method == "Sandbox" or order.payment.payment_method == "Sandbox Mock Payment" %}Payment Gateway (UPI, Card, etc.){% else %}{{ order.payment.payment_method|default:"Payment Gateway (UPI, Card, etc.)" }}{% endif %}</span>
+        </div>
+        <div class="col-md-4 text-md-end">
+          <strong>Transaction Ref:</strong>
+          <code class="text-primary ms-1">{{ order.payment.transaction_id|default:"TXN-ONLINE" }}</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- Invoice Footer -->
+    <div class="text-center text-muted small mt-4">
+      <p class="mb-1">This is a computer-generated tax invoice and requires no physical signature.</p>
+      <p class="mb-0">Thank you for shopping with <strong>EasyTech Store</strong>!</p>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

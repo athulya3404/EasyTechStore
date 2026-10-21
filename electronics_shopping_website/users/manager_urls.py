@@ -46,6 +46,7 @@ urlpatterns = [
     
     # Orders
     path("dashboard/orders/", view=manager_views.manager_orders, name="orders"),
+    path("dashboard/orders/auto-delivery-sweep/", view=manager_views.trigger_auto_delivery_sweep, name="auto_delivery_sweep"),
     path("dashboard/orders/<int:pk>/detail/", view=manager_views.order_detail, name="order_detail"),
     path("dashboard/orders/<int:pk>/update-status/", view=manager_views.update_order_status, name="update_order_status"),
     

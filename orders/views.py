@@ -12,6 +12,7 @@ from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 from django.contrib import messages
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -36,7 +37,7 @@ from .payments import (
 )
 from electronics_shopping_website.users.models import Address
 
-ORDER_EXPIRATION_MINUTES = 15
+ORDER_EXPIRATION_MINUTES = 10
 
 
 def compute_order_breakdown(gross_total):
@@ -228,6 +229,7 @@ def checkout_view(request):
                     address=addr_data["address"],
                     shipping_address=addr_data["shipping_address"],
                     status=initial_status,
+                    auto_delivery_days=deliv_days,
                     subtotal=subtotal_val,
                     tax_amount=tax_val,
                     shipping_fee=shipping_val,
@@ -302,14 +304,55 @@ def checkout_view(request):
 
 @login_required
 def customer_orders_view(request):
-    """Customer view for their order history & tracking."""
+    """Customer view for their order history & tracking with status filter tabs."""
+    try:
+        from orders.services_lifecycle import run_order_progression_sweep
+        run_order_progression_sweep(hours_delay=1, immediate=False)
+    except Exception:
+        pass
+
     if request.user.is_staff or request.user.is_superuser:
-        orders = Order.objects.filter(user=request.user).prefetch_related('items__product', 'payments').order_by('-created_at')
-        if not orders.exists():
-            orders = Order.objects.all().prefetch_related('items__product', 'payments').order_by('-created_at')[:25]
+        base_orders = Order.objects.filter(user=request.user)
+        if not base_orders.exists():
+            base_orders = Order.objects.all()
     else:
-        orders = Order.objects.filter(user=request.user).prefetch_related('items__product', 'payments').order_by('-created_at')
-    return render(request, "orders/my_orders.html", {"orders": orders})
+        base_orders = Order.objects.filter(user=request.user)
+
+    total_count = base_orders.count()
+    pending_count = base_orders.filter(status__in=[Order.STATUS_PENDING, Order.STATUS_PAYMENT_PENDING]).count()
+    paid_count = base_orders.filter(status=Order.STATUS_PAID).count()
+    shipped_count = base_orders.filter(status=Order.STATUS_SHIPPED).count()
+    delivered_count = base_orders.filter(status=Order.STATUS_DELIVERED).count()
+    cancelled_count = base_orders.filter(status=Order.STATUS_CANCELLED).count()
+
+    status_filter = request.GET.get('status', '').strip()
+    filtered_orders = base_orders.prefetch_related('items__product', 'payments').order_by('-created_at')
+
+    if status_filter == 'Pending':
+        filtered_orders = filtered_orders.filter(status__in=[Order.STATUS_PENDING, Order.STATUS_PAYMENT_PENDING])
+    elif status_filter == 'Paid':
+        filtered_orders = filtered_orders.filter(status=Order.STATUS_PAID)
+    elif status_filter == 'Shipped':
+        filtered_orders = filtered_orders.filter(status=Order.STATUS_SHIPPED)
+    elif status_filter == 'Delivered':
+        filtered_orders = filtered_orders.filter(status=Order.STATUS_DELIVERED)
+    elif status_filter == 'Cancelled':
+        filtered_orders = filtered_orders.filter(status=Order.STATUS_CANCELLED)
+
+    return render(
+        request, 
+        "orders/my_orders.html", 
+        {
+            "orders": filtered_orders,
+            "selected_status": status_filter,
+            "total_count": total_count,
+            "pending_count": pending_count,
+            "paid_count": paid_count,
+            "shipped_count": shipped_count,
+            "delivered_count": delivered_count,
+            "cancelled_count": cancelled_count,
+        }
+    )
 
 
 @login_required
@@ -610,7 +653,7 @@ def cancel_order_view(request, order_id):
 
     if order.status == Order.STATUS_CANCELLED:
         messages.info(request, "This order is already cancelled.")
-        return redirect("orders:my_orders")
+        return redirect("/orders/my-orders/?status=Cancelled")
 
     with transaction.atomic():
         for item in order.items.select_related("product").all():
@@ -622,7 +665,39 @@ def cancel_order_view(request, order_id):
         order.payments.filter(status="Pending").update(status="Failed")
 
     messages.success(request, f"Order #{order.id} has been cancelled successfully and reserved inventory was restored.")
-    return redirect("orders:my_orders")
+    return redirect("/orders/my-orders/?status=Cancelled")
+
+
+@login_required
+def request_return_view(request, order_id):
+    """
+    Customer Self-Service Return & Refund Portal (Feature 5):
+    Allows customer to initiate a return request within 7 days of order delivery.
+    """
+    if request.user.is_staff or request.user.is_superuser:
+        order = get_object_or_404(Order.objects.prefetch_related('items__product'), id=order_id)
+    else:
+        order = get_object_or_404(Order.objects.prefetch_related('items__product'), id=order_id, user=request.user)
+
+    if order.status != Order.STATUS_DELIVERED:
+        messages.error(request, f"Return requests can only be placed for delivered orders (Current status: {order.status}).")
+        return redirect("orders:confirmation", order_id=order.id)
+
+    # 7-day policy validation
+    if order.delivered_at and (timezone.now() - order.delivered_at).days > 7:
+        messages.error(request, "The 7-day return policy window for this order has expired.")
+        return redirect("orders:confirmation", order_id=order.id)
+
+    if request.method == "POST":
+        reason = request.POST.get("return_reason", "").strip() or "Customer initiated return request"
+        order.status = Order.STATUS_RETURN_REQUESTED
+        order.return_reason = reason
+        order.return_requested_at = timezone.now()
+        order.save()
+        messages.success(request, f"Return request for Order #{order.id} submitted! Our support team will process your refund/replacement within 24 hours.")
+        return redirect("orders:confirmation", order_id=order.id)
+
+    return render(request, "orders/request_return.html", {"order": order})
 
 
 @login_required
@@ -641,18 +716,16 @@ def payment_gateway_view(request, order_id):
     if order.status in [Order.STATUS_PAID, Order.STATUS_SHIPPED, Order.STATUS_DELIVERED]:
         return redirect("orders:confirmation", order_id=order.id)
 
-    # Check 15-minute expiration
+    # Check 10-minute expiration: delete order and release stock if unpaid
     if order.status in [Order.STATUS_PENDING, Order.STATUS_PAYMENT_PENDING]:
         if order.expires_at and timezone.now() > order.expires_at:
             with transaction.atomic():
                 for item in order.items.select_related('product').all():
                     if item.product_id:
                         Product.objects.filter(id=item.product_id).update(stock=F('stock') + item.quantity)
-                order.status = Order.STATUS_CANCELLED
-                order.save()
-                order.payments.filter(status="Pending").update(status="Failed")
+                order.delete()
 
-            messages.error(request, "Your checkout session has expired (15-minute limit). Reserved items were released.")
+            messages.error(request, "Your checkout session has expired (10-minute limit). The unpaid order was deleted and items were released.")
             return redirect("cart:cart_detail")
 
     # If already cancelled
@@ -685,6 +758,12 @@ def payment_gateway_view(request, order_id):
                     status="Success"
                 )
                 order.status = Order.STATUS_PAID
+                order.paid_at = timezone.now()
+                if not order.auto_delivery_days:
+                    from orders.services_lifecycle import calculate_random_delivery_days
+                    order.auto_delivery_days = calculate_random_delivery_days(order)
+                if not order.estimated_delivery_date:
+                    order.estimated_delivery_date = (timezone.now() + timedelta(days=order.auto_delivery_days)).date()
                 order.save()
 
                 send_order_confirmation_email(order, request.user, payment_method, payment.transaction_id)
@@ -834,7 +913,20 @@ class OrderViewSet(viewsets.ViewSet):
 
         shipping_address = request.data.get("shipping_address", "").strip()
         payment_method = request.data.get("payment_method", "Sandbox")
-        selected_item_ids = request.data.get("selected_item_ids", [])
+        selected_item_ids_raw = request.data.get("selected_item_ids", [])
+        if isinstance(selected_item_ids_raw, (int, float)):
+            selected_item_ids = [int(selected_item_ids_raw)]
+        elif isinstance(selected_item_ids_raw, str):
+            selected_item_ids = [int(x) for x in selected_item_ids_raw.split(",") if x.strip().isdigit()]
+        elif isinstance(selected_item_ids_raw, (list, tuple, set)):
+            selected_item_ids = []
+            for x in selected_item_ids_raw:
+                try:
+                    selected_item_ids.append(int(x))
+                except (ValueError, TypeError):
+                    pass
+        else:
+            selected_item_ids = []
         auto_capture = request.data.get("auto_capture", False)
         address_id = request.data.get("address_id")
 
@@ -919,6 +1011,8 @@ class OrderViewSet(viewsets.ViewSet):
                     address=addr_data["address"],
                     shipping_address=addr_data["shipping_address"],
                     status=initial_status,
+                    paid_at=timezone.now() if should_auto_pay else None,
+                    auto_delivery_days=deliv_days,
                     subtotal=subtotal_val,
                     tax_amount=tax_val,
                     shipping_fee=shipping_val,
@@ -1028,21 +1122,20 @@ class OrderViewSet(viewsets.ViewSet):
                     "redirect_url": "/orders/checkout/"
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Check expiration (15 minutes)
+            # Check expiration (10 minutes): delete order and release stock if unpaid
             if order.status in [Order.STATUS_PENDING, Order.STATUS_PAYMENT_PENDING]:
                 if order.expires_at and timezone.now() > order.expires_at:
                     for item in order.items.select_related('product').all():
                         if item.product_id:
                             Product.objects.filter(id=item.product_id).update(stock=F('stock') + item.quantity)
-                    order.status = Order.STATUS_CANCELLED
-                    order.save()
-                    order.payments.filter(status="Pending").update(status="Failed")
+                    order_id_val = order.id
+                    order.delete()
 
                     return Response({
                         "success": False,
                         "can_retry": False,
-                        "error": "This checkout session has expired (15-minute timeout). Reserved inventory has been restored.",
-                        "order_id": order.id,
+                        "error": "This checkout session has expired (10-minute timeout). The unpaid order was deleted and reserved inventory was restored.",
+                        "order_id": order_id_val,
                         "redirect_url": "/cart/"
                     }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1057,6 +1150,12 @@ class OrderViewSet(viewsets.ViewSet):
                 )
 
                 order.status = Order.STATUS_PAID
+                order.paid_at = timezone.now()
+                if not order.auto_delivery_days:
+                    from orders.services_lifecycle import calculate_random_delivery_days
+                    order.auto_delivery_days = calculate_random_delivery_days(order)
+                if not order.estimated_delivery_date:
+                    order.estimated_delivery_date = (timezone.now() + timedelta(days=order.auto_delivery_days)).date()
                 order.save()
 
                 send_order_confirmation_email(order, request.user, payment_method, payment.transaction_id)
@@ -1138,7 +1237,7 @@ def advance_order_status_view(request, order_id):
         messages.info(request, f"Order #{order.id} is already in state: {order.status}.")
 
     next_url = request.GET.get("next") or request.META.get("HTTP_REFERER")
-    if next_url:
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
         return redirect(next_url)
     return redirect("orders:confirmation", order_id=order.id)
 

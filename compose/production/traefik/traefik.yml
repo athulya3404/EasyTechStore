@@ -34,23 +34,28 @@ http:
       rule: 'PathPrefix(`/media/`)'
       entryPoints:
         - web
+      priority: 1000
       service: django-media
 
     web-secure-router:
-      rule: 'PathPrefix(`/`)'
+      rule: 'Host(`easystore1.me`) || Host(`www.easystore1.me`) || PathPrefix(`/`)'
       entryPoints:
         - web-secure
       middlewares:
         - csrf
       service: django
       tls:
-        # https://doc.traefik.io/traefik/routing/routers/#certresolver
         certResolver: letsencrypt
+        domains:
+          - main: easystore1.me
+            sans:
+              - www.easystore1.me
 
     web-media-router:
       rule: 'PathPrefix(`/media/`)'
       entryPoints:
         - web-secure
+      priority: 1000
       middlewares:
         - csrf
       service: django-media

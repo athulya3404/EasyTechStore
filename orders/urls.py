@@ -6,6 +6,7 @@ from .views import (
     download_invoice_view,
     payment_gateway_view,
     cancel_order_view,
+    request_return_view,
     advance_order_status_view,
     resend_invoice_email_view,
 )
@@ -23,6 +24,7 @@ urlpatterns = [
     path("<int:order_id>/invoice/", download_invoice_view, name="download_invoice"),
     path("<int:order_id>/invoice/pdf/", download_invoice_view, {"format_pdf": True}, name="download_invoice_pdf"),
     path("<int:order_id>/cancel/", cancel_order_view, name="cancel_order"),
+    path("<int:order_id>/return/", request_return_view, name="request_return"),
     path("<int:order_id>/advance-status/", advance_order_status_view, name="advance_status"),
     path("<int:order_id>/resend-invoice/", resend_invoice_email_view, name="resend_invoice"),
 ]

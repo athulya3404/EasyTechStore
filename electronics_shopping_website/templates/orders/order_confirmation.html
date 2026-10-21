@@ -41,6 +41,16 @@
                 <h5 class="fw-bold mb-1">Order Cancelled</h5>
                 <p class="mb-0 small text-muted">This order was cancelled and inventory has been restored. Please contact support if you need assistance.</p>
               </div>
+          {% elif order.status == 'Return_Requested' %}
+            <div class="alert alert-warning d-flex align-items-center rounded-4 p-4 mb-4 border-0 shadow-sm" role="alert">
+              <i class="fa-solid fa-clock-rotate-left fs-2 text-warning me-3 flex-shrink-0"></i>
+              <div>
+                <h5 class="fw-bold mb-1">Return & Replacement Request Pending</h5>
+                <p class="mb-0 small">
+                  Your return request for this order was submitted on <strong>{{ order.return_requested_at|date:"M d, Y" }}</strong>.<br>
+                  Reason: <em>"{{ order.return_reason }}"</em>. Our operations team is processing the courier reverse pickup.
+                </p>
+              </div>
             </div>
           {% else %}
             <!-- Hero Delivery Headline Card -->
@@ -322,6 +332,13 @@
               </svg>
               Download Tax Invoice (PDF)
             </a>
+
+            {% if order.status == 'Delivered' %}
+            <a href="{% url 'orders:request_return' order.id %}" class="btn btn-outline-danger px-4 fw-bold shadow-sm">
+              <i class="fa-solid fa-arrow-rotate-left me-1"></i> Request Return / Refund
+            </a>
+            {% endif %}
+
             <a href="{% url 'orders:my_orders' %}" class="btn btn-primary px-4 fw-semibold shadow-sm">
               View All My Orders
             </a>
